@@ -392,6 +392,42 @@ async function apiPost(payload) {
   if (!response.ok) throw new Error('Server returned HTTP ' + response.status);
   return response.json();
 }
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+async function savePlanAsPdf(id) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showStatus('Please allow pop-ups for this site to save a lesson plan as PDF.','error');
+    return;
+  }
+  printWindow.document.write('<!doctype html><title>Preparing lesson plan…</title><p>Preparing lesson plan for PDF…</p>');
+  try {
+    const result = await apiGet({action:'get',id});
+    if (!result.success) throw new Error(result.message || 'Could not retrieve lesson plan.');
+    const plan = result.plan || {};
+    const labels = [
+      ['teacherName',"Teacher's Name"],['designation','Designation'],['stage','Stage'],['className','Class / Section'],
+      ['subject','Subject'],['chapter','Chapter / Theme'],['date','Date'],['periodsRequired','Periods Required'],
+      ['studentCount','Number of Students'],['preparedBy','Lesson Plan Prepared By'],['competencies','Competencies'],
+      ['concepts','Key Concepts'],['learningObjectives','Learning Objectives'],['teachingLearningMaterials','Teaching-Learning Materials'],
+      ['introduction','Introduction'],['activities','Activities'],['assessment','Assessment'],['homework','Homework'],
+      ['reflection','Reflection'],['principalSignature',"Director's Name / Signature"]
+    ];
+    const fields = labels.filter(([key]) => plan[key] != null && plan[key] !== '').map(([key,label]) => {
+      const value = Array.isArray(plan[key]) ? plan[key].join(', ') : plan[key];
+      return '<tr><th>' + escapeHtml(label) + '</th><td>' + escapeHtml(value).replace(/\n/g,'<br>') + '</td></tr>';
+    }).join('');
+    const matrix = Array.isArray(plan.matrix) ? plan.matrix : [];
+    const matrixHtml = matrix.length ? '<h2>Teaching-Learning Plan Matrix</h2><table><thead><tr><th>Concept / Learning Sequence</th><th>NCERT Learning Outcomes</th><th>Pedagogical Strategies / Activities</th><th>Integration with Other Subjects</th><th>Assessment / Item Format</th><th>Resources</th><th>21st-Century Skills / Values</th><th>Extension / Real-life Applications</th></tr></thead><tbody>' + matrix.map(row => '<tr>' + ['concept','outcomes','strategies','integration','assessment','resources','skills','extension'].map(key => '<td>' + escapeHtml(row[key] || '').replace(/\n/g,'<br>') + '</td>').join('') + '</tr>').join('') + '</tbody></table>' : '';
+    printWindow.document.open();
+    printWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(plan.chapter || 'Lesson Plan') + ' - Lesson Plan</title><style>body{font:12px Arial,sans-serif;color:#172033;margin:22px}h1{font-size:22px;color:#17365d;margin:0 0 6px}h2{font-size:16px;color:#17365d;margin-top:22px}p{margin:4px 0 18px;color:#555}table{width:100%;border-collapse:collapse;margin:10px 0 18px;table-layout:fixed}th,td{border:1px solid #aab7c4;padding:6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#edf3f8}table.matrix{font-size:9px}@media print{body{margin:10mm}.no-print{display:none}}@page{size:A4 landscape;margin:12mm}</style></head><body><h1>Kendriya Vidyalaya Sangathan</h1><p>KVS Lesson Plan Organiser</p><h2>General Information</h2><table>' + fields + '</table>' + matrixHtml + '<p>Director\'s Name / Signature: ' + escapeHtml(plan.principalSignature || '') + '</p><script>window.onload=function(){window.print();};<\/script></body></html>');
+    printWindow.document.close();
+  } catch (error) {
+    printWindow.close();
+    showStatus('Unable to prepare PDF: ' + error.message,'error');
+  }
+}
 async function refreshPlans() {
   $('savedPlans').textContent = 'Loading saved plans…';
   try {
@@ -413,9 +449,11 @@ async function refreshPlans() {
       const buttons = document.createElement('div'); buttons.className = 'actions';
       const edit = document.createElement('button'); edit.className='secondary'; edit.textContent='Open';
       edit.addEventListener('click',()=>openPlan(plan.id));
+      const pdf = document.createElement('button'); pdf.className='secondary'; pdf.textContent='Save PDF';
+      pdf.addEventListener('click',()=>savePlanAsPdf(plan.id));
       const del = document.createElement('button'); del.className='danger'; del.textContent='Delete';
       del.addEventListener('click',()=>deletePlan(plan.id));
-      buttons.append(edit,del); item.append(info,buttons); $('savedPlans').appendChild(item);
+      buttons.append(edit,pdf,del); item.append(info,buttons); $('savedPlans').appendChild(item);
     });
   } catch (err) {
     $('savedPlans').textContent = 'Could not load saved plans: ' + err.message + '. Check deployment access and the Apps Script endpoint.';
