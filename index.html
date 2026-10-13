@@ -60,7 +60,31 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
           </select>
           <small id="competenciesHelp" class="saved-meta">On a computer, hold Ctrl (Windows) or Command (Mac) while clicking to select multiple competencies.</small>
         </div>
-        <div class="field wide"><label for="concepts">Key Concepts (one per line)</label><textarea id="concepts" name="concepts" placeholder="Concept 1&#10;Concept 2&#10;Concept 3"></textarea></div>
+        <div class="field wide">
+          <label for="concepts">Key Concepts — select one or more</label>
+          <select id="concepts" name="concepts" multiple size="9" aria-describedby="conceptsHelp">
+            <option value="Naada (Sound and volume)">Naada (Sound and volume)</option>
+            <option value="Shruti / Sur (Pitch)">Shruti / Sur (Pitch)</option>
+            <option value="Swara / Swar (Note)">Swara / Swar (Note)</option>
+            <option value="Laya / Lay (Tempo)">Laya / Lay (Tempo)</option>
+            <option value="Taala / Taal (Rhythm)">Taala / Taal (Rhythm)</option>
+            <option value="Gaayan (Vocals)">Gaayan (Vocals)</option>
+            <option value="Vaadan (Instrumentals)">Vaadan (Instrumentals)</option>
+            <option value="Nritya (Dance and Movement)">Nritya (Dance and Movement)</option>
+            <option value="Alankaara (Elaboration, melodic variations, decoration)">Alankaara (Elaboration, melodic variations, decoration)</option>
+            <option value="Saahitya (Lyrics or literature)">Saahitya (Lyrics or literature)</option>
+            <option value="Bhaava (Emotion)">Bhaava (Emotion)</option>
+            <option value="Mudra (Hand gestures, symbols)">Mudra (Hand gestures, symbols)</option>
+            <option value="Body Parts">Body Parts</option>
+            <option value="Postures">Postures</option>
+            <option value="Sides">Sides</option>
+            <option value="Positions">Positions</option>
+            <option value="Upper body">Upper body</option>
+            <option value="Lower body">Lower body</option>
+            <option value="Levels (High, Middle, Low)">Levels (High, Middle, Low)</option>
+          </select>
+          <small id="conceptsHelp" class="saved-meta">Hold Ctrl (Windows) or Command (Mac) while clicking to select multiple concepts. On mobile, tap to select options as supported by your browser.</small>
+        </div>
       </div>
     </section>
     <section class="panel">
@@ -149,6 +173,8 @@ function collectPlan() {
   $('planForm').querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
     if (el.id === 'competencies') {
       plan.competencies = Array.from(el.selectedOptions).map(option => option.value);
+    } else if (el.id === 'concepts') {
+      plan.concepts = Array.from(el.selectedOptions).map(option => option.value);
     } else if (el.id) {
       plan[el.id] = el.value.trim();
     }
@@ -170,6 +196,13 @@ function fillPlan(plan) {
     : (typeof plan.competencies === 'string' ? plan.competencies.split('\\n').filter(Boolean) : []);
   Array.from(competencySelect.options).forEach(option => {
     option.selected = selectedCompetencies.includes(option.value);
+  });
+  const conceptsSelect = $('concepts');
+  const selectedConcepts = Array.isArray(plan.concepts)
+    ? plan.concepts
+    : (typeof plan.concepts === 'string' ? plan.concepts.split('\\n').map(value => value.trim()).filter(Boolean) : []);
+  Array.from(conceptsSelect.options).forEach(option => {
+    option.selected = selectedConcepts.includes(option.value);
   });
   $('matrixBody').innerHTML = '';
   (Array.isArray(plan.matrix) && plan.matrix.length ? plan.matrix : [{}]).forEach(addMatrixRow);
