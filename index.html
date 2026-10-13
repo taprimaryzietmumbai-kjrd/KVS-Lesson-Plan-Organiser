@@ -36,7 +36,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
     <section class="panel">
       <h2>1. General Information</h2>
       <div class="grid">
-        <div class="field"><label for="teacherName">Teacher's Name</label><input id="teacherName" name="teacherName" required></div>
+        <div class="field"><label for="teacherName">Teacher's Name (PRTM PATNA)</label><select id="teacherName" name="teacherName" required><option value="">Loading teacher names…</option></select><small id="teacherNameHelp" class="saved-meta">Names are loaded from the PRTM PATNA column in the linked Google Sheet.</small></div>
         <div class="field"><label for="designation">Designation</label><input id="designation" name="designation"></div>
         <div class="field"><label for="className">Class / Section</label><input id="className" name="className" required></div>
         <div class="field"><label for="subject">Subject</label><input id="subject" name="subject" required></div>
@@ -159,6 +159,55 @@ function showStatus(message, type='info') {
   statusBox.textContent = message;
   statusBox.className = 'notice ' + type;
 }
+const TEACHER_SHEET_ID = '1Uuqoz2KFpTcw9d2HI02fLmFPopTaLnKWwZ9aR-uYCeY';
+const TEACHER_SHEET_GID = '1047578336';
+const TEACHER_HEADER = 'PRTM PATNA';
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [], value = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (quoted && text[i + 1] === '"') { value += '"'; i++; }
+      else quoted = !quoted;
+    } else if (ch === ',' && !quoted) {
+      row.push(value); value = '';
+    } else if ((ch === '\\n' || ch === '\\r') && !quoted) {
+      if (ch === '\\r' && text[i + 1] === '\\n') i++;
+      row.push(value); rows.push(row); row = []; value = '';
+    } else value += ch;
+  }
+  if (value.length || row.length) { row.push(value); rows.push(row); }
+  return rows;
+}
+async function loadTeacherNames() {
+  const select = $('teacherName');
+  select.innerHTML = '<option value="">Loading teacher names…</option>';
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/' + TEACHER_SHEET_ID +
+      '/gviz/tq?tqx=out:csv&gid=' + TEACHER_SHEET_GID;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Google Sheet returned HTTP ' + response.status);
+    const rows = parseCsv(await response.text());
+    const headerIndex = rows.findIndex(row => row.some(cell => cell.trim().replace(/^\\uFEFF/, '') === TEACHER_HEADER));
+    if (headerIndex < 0) throw new Error('Column heading "' + TEACHER_HEADER + '" was not found. Check that this sheet tab is accessible and the heading matches exactly.');
+    const columnIndex = rows[headerIndex].findIndex(cell => cell.trim().replace(/^\\uFEFF/, '') === TEACHER_HEADER);
+    const names = [...new Set(rows.slice(headerIndex + 1).map(row => (row[columnIndex] || '').trim()).filter(Boolean))];
+    if (!names.length) throw new Error('No teacher names were found under "' + TEACHER_HEADER + '".');
+    select.innerHTML = '<option value="">Select a teacher…</option>';
+    names.sort((a,b) => a.localeCompare(b)).forEach(name => {
+      const option = document.createElement('option');
+      option.value = name; option.textContent = name; select.appendChild(option);
+    });
+    select.dataset.loaded = 'true';
+  } catch (error) {
+    select.innerHTML = '<option value="">Teacher list could not be loaded</option>';
+    $('teacherNameHelp').textContent = 'Could not load names from the sheet. The source sheet may need Viewer access for anyone with the link. Details: ' + error.message;
+    $('teacherNameHelp').style.color = '#9b1c1c';
+  }
+}
+
 function addMatrixRow(values={}) {
   const fields = [
     ['concept','Concept / Learning Sequence'],
@@ -324,6 +373,7 @@ $('newBtn').addEventListener('click',()=>{
 });
 $('printBtn').addEventListener('click',()=>window.print());
 addMatrixRow(); addMatrixRow(); addMatrixRow();
+loadTeacherNames();
 (async()=>{
   try {
     const result = await apiGet({action:'ping'});
