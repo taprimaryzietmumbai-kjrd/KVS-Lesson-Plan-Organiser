@@ -269,6 +269,36 @@ const CLASS_FOUR_CHAPTERS = {
   ]
 };
 
+const CLASS_FIVE_CHAPTERS = {
+  "Visual Arts": [
+    "1. Objects on the Move",
+    "2. Peeping Out of the Window",
+    "3. Picturing Stories",
+    "4. Imaginary Beings",
+    "5. Spreading the Message"
+  ],
+  "Theatre": [
+    "6. Create a Scene",
+    "7. Stitch it for a Story",
+    "8. Time, Team, Technique",
+    "9. View and Review"
+  ],
+  "Music & Singing": [
+    "10. Sing and Play",
+    "11. Music Around Me",
+    "12. Sounds and Instruments",
+    "13. Building Blocks",
+    "14. Ideas and Inspiration"
+  ],
+  "Dance and Movements": [
+    "15. My Everyday Activities in Modes of Dance",
+    "16. Dancing with Rhythm and Tempos",
+    "17. Dances of My Nation",
+    "18. My Dance Expresses Emotions and Narrates Stories",
+    "19. My Dance and Your Dance"
+  ]
+};
+
 const CLASS_THREE_CHAPTERS = {
   "Visual Arts": [
     "1. Objects on the Move",
@@ -304,7 +334,7 @@ function updateChapterOptions(preserveValue = false) {
   const subjectValue = $('subject').value;
   const chapterSelect = $('chapter');
   const previousValue = preserveValue ? chapterSelect.value : '';
-  const chapterSets = classValue === 'III' ? CLASS_THREE_CHAPTERS : (classValue === 'IV' ? CLASS_FOUR_CHAPTERS : null);
+  const chapterSets = classValue === 'III' ? CLASS_THREE_CHAPTERS : (classValue === 'IV' ? CLASS_FOUR_CHAPTERS : (classValue === 'V' ? CLASS_FIVE_CHAPTERS : null));
   const chapters = chapterSets ? (chapterSets[subjectValue] || []) : [];
   chapterSelect.innerHTML = '';
   if (chapters.length) {
@@ -319,7 +349,7 @@ function updateChapterOptions(preserveValue = false) {
     chapterSelect.disabled = true;
     $('chapterHelp').textContent = configuredClass
       ? (subjectValue ? 'No chapters are configured for Class ' + classValue + ' ' + subjectValue + '.' : 'Choose a subject to load chapters for Class ' + classValue + '.')
-      : 'Automatic chapter selection is currently configured for Classes III and IV.';
+      : 'Automatic chapter selection is currently configured for Classes III, IV and V.';
   }
 }
 
