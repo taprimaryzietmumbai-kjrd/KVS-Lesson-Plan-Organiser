@@ -46,6 +46,20 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
         <div class="field"><label for="students">Number of Students</label><input id="students" name="students" type="number" min="0"></div>
         <div class="field"><label for="developer">Lesson Plan Prepared By</label><input id="developer" name="developer"></div>
         <div class="field wide"><label for="source">Source / References</label><textarea id="source" name="source"></textarea></div>
+        <div class="field wide">
+          <label for="competencies">Competencies for the Preparatory Stage (Reprint 2026-2) — select one or more</label>
+          <select id="competencies" name="competencies" multiple size="8" aria-describedby="competenciesHelp">
+            <option value="C–1.1 Expresses enthusiasm to practise and perform music that is familiar to them.">C–1.1 — Expresses enthusiasm to practise and perform music that is familiar to them.</option>
+            <option value="C–1.2 Discusses own thoughts and responses while working collaboratively in music.">C–1.2 — Discusses own thoughts and responses while working collaboratively in music.</option>
+            <option value="C–2.1 Practises and performs songs and rhythms in a variety of musical arrangements (arrangement of vocal, instrumental, solo, duet, ensemble or group).">C–2.1 — Practises and performs songs and rhythms in a variety of musical arrangements (arrangement of vocal, instrumental, solo, duet, ensemble or group).</option>
+            <option value="C–2.2 Compares and contrasts musical elements (Laya, Taala, Sur, Bhaava), lyrics and expressions in a variety of musical styles introduced in the classroom.">C–2.2 — Compares and contrasts musical elements (Laya, Taala, Sur, Bhaava), lyrics and expressions in a variety of musical styles introduced in the classroom.</option>
+            <option value="C–3.1 Makes choices while working with voices, instruments and arrangements used in music.">C–3.1 — Makes choices while working with voices, instruments and arrangements used in music.</option>
+            <option value="C–3.2 Contributes ideas while selecting music for performance and participates in rehearsals.">C–3.2 — Contributes ideas while selecting music for performance and participates in rehearsals.</option>
+            <option value="C–4.1 Recognises musical elements in nature and describes their artistic qualities.">C–4.1 — Recognises musical elements in nature and describes their artistic qualities.</option>
+            <option value="C–4.2 Demonstrates curiosity towards local art forms and culture.">C–4.2 — Demonstrates curiosity towards local art forms and culture.</option>
+          </select>
+          <small id="competenciesHelp" class="saved-meta">On a computer, hold Ctrl (Windows) or Command (Mac) while clicking to select multiple competencies.</small>
+        </div>
         <div class="field wide"><label for="concepts">Key Concepts (one per line)</label><textarea id="concepts" name="concepts" placeholder="Concept 1&#10;Concept 2&#10;Concept 3"></textarea></div>
       </div>
     </section>
@@ -133,7 +147,11 @@ function collectMatrix() {
 function collectPlan() {
   const plan = {};
   $('planForm').querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
-    if (el.id) plan[el.id] = el.value.trim();
+    if (el.id === 'competencies') {
+      plan.competencies = Array.from(el.selectedOptions).map(option => option.value);
+    } else if (el.id) {
+      plan[el.id] = el.value.trim();
+    }
   });
   plan.id = $('planId').value || '';
   plan.matrix = collectMatrix();
@@ -144,7 +162,14 @@ function fillPlan(plan) {
   $('planId').value = plan.id || '';
   Object.keys(plan).forEach(key => {
     const el = $(key);
-    if (el && key !== 'planId' && !['matrix'].includes(key)) el.value = plan[key] ?? '';
+    if (el && key !== 'planId' && key !== 'matrix' && key !== 'competencies') el.value = plan[key] ?? '';
+  });
+  const competencySelect = $('competencies');
+  const selectedCompetencies = Array.isArray(plan.competencies)
+    ? plan.competencies
+    : (typeof plan.competencies === 'string' ? plan.competencies.split('\\n').filter(Boolean) : []);
+  Array.from(competencySelect.options).forEach(option => {
+    option.selected = selectedCompetencies.includes(option.value);
   });
   $('matrixBody').innerHTML = '';
   (Array.isArray(plan.matrix) && plan.matrix.length ? plan.matrix : [{}]).forEach(addMatrixRow);
