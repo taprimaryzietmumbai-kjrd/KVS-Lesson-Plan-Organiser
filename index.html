@@ -14,6 +14,8 @@ main{max-width:1180px;margin:22px auto;padding:0 16px 40px}.notice{padding:12px 
 .panel{background:white;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 2px 8px #162b4508}
 h2{font-size:19px;color:var(--navy);margin:0 0 15px}h3{font-size:16px;color:var(--navy);margin:18px 0 10px}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:5px}.field.wide{grid-column:1/-1}
+.prepared-for-display{min-height:64px;display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fbff;color:var(--navy);font-weight:700}
+.prepared-for-icon{display:inline-flex;align-items:center;justify-content:center;min-width:52px;min-height:48px;font-size:35px;border-radius:50%;background:#fff;border:2px solid #d9e4ef}
 label{font-size:13px;font-weight:700;color:#344054}input,select,textarea{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:10px;background:#fff;color:var(--ink)}textarea{min-height:82px;resize:vertical}input:focus,textarea:focus,select:focus{outline:2px solid #9dc3eb;border-color:var(--blue)}
 .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}button{border:0;border-radius:7px;padding:10px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:white}button.secondary{background:#e8edf3;color:#24364b}button.danger{background:#a62c2c}button:disabled{opacity:.55;cursor:wait}
 .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:var(--pale);color:var(--navy);font-size:13px}td input,td textarea{min-width:125px;border:0;padding:7px;background:transparent}td textarea{min-height:58px}
@@ -45,7 +47,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
         <div class="field"><label for="date">Date</label><input id="date" name="date" type="date"></div>
         <div class="field"><label for="periodsRequired">Periods Required</label><input id="periodsRequired" name="periodsRequired" type="number" min="1"></div>
         <div class="field"><label for="students">Number of Students</label><input id="students" name="students" type="number" min="0"></div>
-        <div class="field"><label for="developer">Lesson Plan Prepared By</label><input id="developer" name="developer"></div>
+        <div class="field"><label>Lesson Plan Prepared for</label><input id="developer" name="developer" type="hidden" value=""><div id="preparedForDisplay" class="prepared-for-display" aria-live="polite"><span class="prepared-for-icon" aria-hidden="true">🎨 🎭 🎸 💃</span><span>Select a Subject to display its illustration and name.</span></div></div>
         <div class="field wide"><label for="source">Source / References</label><textarea id="source" name="source"></textarea></div>
         <div class="field wide">
           <label for="competencies">Competencies for the Preparatory Stage (Reprint 2026-2) — select one or more</label>
@@ -329,6 +331,25 @@ const CLASS_THREE_CHAPTERS = {
   ]
 };
 
+function updatePreparedFor() {
+  const subject = $('subject').value;
+  const choices = {
+    'Visual Arts': { icon: '🎨', label: 'Visual Arts' },
+    'Theatre': { icon: '🎭', label: 'Theatre' },
+    'Music & Singing': { icon: '🎸', label: 'Music & Singing' },
+    'Dance and Movements': { icon: '💃', label: 'Dance and Movements' }
+  };
+  const display = $('preparedForDisplay');
+  const choice = choices[subject];
+  if (!choice) {
+    $('developer').value = '';
+    display.innerHTML = '<span class="prepared-for-icon" aria-hidden="true">🎨 🎭 🎸 💃</span><span>Select a Subject to display its illustration and name.</span>';
+    return;
+  }
+  $('developer').value = choice.label;
+  display.innerHTML = '<span class="prepared-for-icon" aria-hidden="true">' + choice.icon + '</span><span>' + choice.label + '</span>';
+}
+
 function updateChapterOptions(preserveValue = false) {
   const classValue = $('className').value;
   const subjectValue = $('subject').value;
@@ -414,6 +435,7 @@ function fillPlan(plan) {
     if (el && key !== 'planId' && key !== 'matrix' && key !== 'competencies') el.value = plan[key] ?? '';
   });
   updateChapterOptions(true);
+  updatePreparedFor();
   const competencySelect = $('competencies');
   const selectedCompetencies = Array.isArray(plan.competencies)
     ? plan.competencies
@@ -559,8 +581,9 @@ $('newBtn').addEventListener('click',()=>{
 $('printBtn').addEventListener('click',()=>window.print());
 addMatrixRow(); addMatrixRow(); addMatrixRow();
 $('className').addEventListener('change', () => updateChapterOptions());
-$('subject').addEventListener('change', () => updateChapterOptions());
+$('subject').addEventListener('change', () => { updateChapterOptions(); updatePreparedFor(); });
 updateChapterOptions();
+updatePreparedFor();
 loadTeacherNames();
 (async()=>{
   try {
