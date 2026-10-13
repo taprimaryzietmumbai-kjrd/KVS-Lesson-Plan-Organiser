@@ -15,7 +15,7 @@ main{max-width:1180px;margin:22px auto;padding:0 16px 40px}.notice{padding:12px 
 h2{font-size:19px;color:var(--navy);margin:0 0 15px}h3{font-size:16px;color:var(--navy);margin:18px 0 10px}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:5px}.field.wide{grid-column:1/-1}
 .prepared-for-display{min-height:64px;display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fbff;color:var(--navy);font-weight:700}
-.prepared-for-icon{display:inline-flex;align-items:center;justify-content:center;min-width:52px;min-height:48px;font-size:35px;border-radius:50%;background:#fff;border:2px solid #d9e4ef}
+.prepared-for-icon{display:block;width:64px;height:64px;object-fit:contain;flex:0 0 64px;border-radius:50%;background:#fff}
 label{font-size:13px;font-weight:700;color:#344054}input,select,textarea{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:10px;background:#fff;color:var(--ink)}textarea{min-height:82px;resize:vertical}input:focus,textarea:focus,select:focus{outline:2px solid #9dc3eb;border-color:var(--blue)}
 .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}button{border:0;border-radius:7px;padding:10px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:white}button.secondary{background:#e8edf3;color:#24364b}button.danger{background:#a62c2c}button:disabled{opacity:.55;cursor:wait}
 .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:var(--pale);color:var(--navy);font-size:13px}td input,td textarea{min-width:125px;border:0;padding:7px;background:transparent}td textarea{min-height:58px}
@@ -331,23 +331,29 @@ const CLASS_THREE_CHAPTERS = {
   ]
 };
 
+const PREPARED_FOR_ICONS = {
+  'Visual Arts': 'data:image/webp;base64,UklGRsoDAABXRUJQVlA4IL4DAAAQEgCdASpBAEgAPqFGmkmmJCIhK547gMAUCWwA0xPS7xLNrrgaDbTeYDzc/RLvDvoAdK7/gKCI2oqXnM7jhXCNL8j8q8LrojKhhGTRwnqXKrbz+VQi/v5FYmr1KGXkmyO3erTvJAPzKvXtU0exDYOTFB9NpK18O5Juc8ANr9FPQdMv+5AhBhpbuLWb+tAnBdgf9SFHf1xpdAAA/vuUB9sWUK7egLGHfwHBdFVk18JLFwn5x9DZC8ihBjBA13EscAl17tx5wqGJkJA/fIHeaEbuytzkUJLLVBjyFpizmFEnrPB63X6ksxzq/k3ufcvNo9QhPNv1mPszknHTgDYHO54n1rgvcxNWyyBZD11ArRa6asqZsgivZsTBLjME060xX/hSvnDbj4UZ1estCWJQliXH7HAtpySRhPPjMsd/67SxGc9MGxHDw6mANqqCAs4WqOg5Ds8wGPC/KbVSubKkoxPh97lTybjmIpzQu07bXk4Gv4Y6B8wGWF1GMTUfRAhvq77mkyc1PLZA9svuelniB2GXxIryYX1kTqP8XLSP5/5PkX1+HFvfkuPZIqsPmkIyv5OIfuWyPZvq8rYdCXzDwr5q4W701PQaYN7Q/bFCNXCR8ZO9kutp8fLPf7WgzBchLlcH4FZ3m7tvXO/XvJkT32sBNqYawnsD4/uSoIiRcVYZW6BA+VDirtayvwrJM/4eBT2jnn1iHNxRUdxeF95GGlrrXTzd0YbBEXdAnDbvMMD52VRO9xGsU2nWTdAOdzyj/cE+yNIqHSP1cYF/Uhnw9rUMvE6rhT1JEmtNjEOUWivg9Axdkglk0DU94Cxy15OupcWz0jSMCnRHMV4yn1t5puhpz181XV3i6ARcGToJ0IxbEweNl3lQq+c/Py6yHmRCrxVeXZxgpJ1t4+0+mzB5mfUTyHHk42cYeEAaRHQul+uncM+eLfOI0ICuzoPU4PflU3XPXGJ6S4DArpYms51fpsPdr3ibNizpLaTpxzg1YZOToBphY+EjuLkXB3x2e6oEqkK1DnRka4IoAx66Z/RXBk2B31fRrL3td4MVfcyINWIojCYoZ3RoHx8fSgMR/16Qb/UtlTPlq6hDvcpFKkZKSvDazNboeh00S3EYOLJStLtQkvrtIH9FHt9TiDhilmtaEY6TYCXTH0/i3U64wjo+Cl0U4+2g7H/VPAtQ6q+ZSeQq8CxJHm2S2byg6QanOhn9P5/Cx7cvYR4XZrXPGs0pUiAoyBNgsIwv05+j94HGbqmQ0M/N/6EgHspVHq4QAAAA',
+  'Theatre': 'data:image/webp;base64,UklGRpYEAABXRUJQVlA4IIoEAADQEwCdASpIAEMAPp1EmEilpCIhK54+eLATiWoAy2BaGYAi+uH6/SJtsudo00zn4/Y5/0mTU2m1GjvNxqqnmgePK8aiif+q2gFUmCOcNvE+kVPAqSQHpORjH5c0FkVrGZmd66RT5rrlf4/noP87v34++k0V4bqkd1fmzc0LwNRbl8y2RraT4BqUYT8Sqa3UE/mecgxWO+ex6DStm1R4i4MzXX83imagAAD++/feeSEcxo86H2a1p6gxywxhe1a7S454xK6QecmATdMEPhfTQam2a5LPStm6gshWJE/IzI4uMft3JtXZ5tbqEMnq2NQ2DKmLxOTm0JI/5VsFqmqMGtLmaY31ah13efllcE5ECwCZv/alLcJeyD6xB+nIamTt3f9R7Sc/yne7u991G09+FWp0gMCMkTbTyz1jHlOJmKAw3FjuCWB68WkZP5gCvYPollw+FmH3Vbbz2rq7sMUlagpa2+d60lJwtfSBdheFJIK4QZ+N+cbUBvMH+J/L6karsyv3h6/ryqmkbsX3k6REyF14LGTf3xHup8/4mfNaPxPemrX7qjIAlpjYtwO3/luve0kbYCmuXrZGRpwJ44lSC2Qr6q5Bv8yaULkk769obWmIF/2u8NIXbfqWtoXCpmUr/5RB3ALi/PpP7pwitlL6nZcy8pt4C3pk4IJPF4WzT/nDeJjnP9c/Ls86Jy+Z2hTVfMqePPPaPcbrpLYx21UTfvA5tsEz8K0KGa4JRL3vVVSEKd8mCUPdvfLVkXIh74KgKi9UbqDjMRFpJoc+RUivQflMLDkYYZ4PAKQRD8todS+HC80M3wvTKtebzM/vOEMWhLjDuvE3X4wy17kGb1Uyl46ywTi6czqvnnTF4rw28IydOmESvkOZcObJDCDu0lVH+FH8XknKs+MoCCajGlwWKv9S07p3gMzTRIDFy2B2ufFDeQT7b8TdoO3AdDe8pUx7//CfLVNyQkTDVqG8gotgBuc0b4fqKvPuGpQltf4UbMKJpFg/R/z2mbRoUBaUJisMupjZP39Wk3eWREhpU9/BdpdOqcOAb2gb7605I+s2bHh8u4NqG6OBrvMVB+3TPkutcFCRDQi/HOk+7etqXYWZDo3oL4gT7mUoUYCPa0EMAJV6rL33u6tbceleXQ9KWPdK/NomuaBmr/vo+HMU2Qb/hcjl7PSjDbfB6/Q6rBzPal5CU1Lq4y0Kn17JSWKHnHi1ryhOEn4aKpDZUB8rrX84CzL6Rd9QrETLFvlNvVZlMYNmhrMeOVcNHEifVF4Bdo4ZaHd5eepFQuKXeDVcbO0mhE+p9B2syBiAYkfGRlCIXadh+W/HEhpW6vYWCmgrxmALkecOhICtufjd0ndyrCaV3x1hebkkOLeAC3CO9PUgscuhtNp+CDPbQGyUSBKksPEJC7qohzYvNT3y9H9FRmUyM2t6BGWdqMoviyYvTb7+VvSTamsjYYgJEuegkM7IuTq8bD39xJ4hlPVTw8L+lk+yRsYZ+OGjoPnluY7wxwSMMxQVrB9nv2fxkI8jngqTgWQqY+61pSQFybHhAAAA',
+  'Music & Singing': 'data:image/webp;base64,UklGRmAEAABXRUJQVlA4IFQEAABwFACdASpEAEgAPqE+mkimIyIhLNgN2MAUCWwAzBoBXV6BZpd97yTICeL+K/ufOm8wDnP+YnzafwA95Pml/6rrXvQA8uH2R/3L/aWCGmDloKasrIGo+Qb6u4GDbumZTt+fQfiq29RTjnQlStlBkCwhBN+AmAWEyy5hXgWP3yC7jTo5vqb/tPvOyUvzMHYeGH0K4aanVteXPtdyRvQZq4tLR7MEWAyxT4eJUYIAAP79Oq08kI4dAzUQlKFKrb6mfzu7nCLXI6ZR68oYzePvoe2GLo8200YCI6a9SNI/RMUrqpf9w/y851d+Iu+kghx3mSLduQAlhV0s6BLokTufRLy3m74J5Be4dEIXUG76waLkFK8huL6Fxt3W1hsqr7Y7u2vxRrib04hLIUfvzG8DTnwnfd4h25yEGXL3+6YYOVdexnEpvlb+ARSTZkEHGBJ6pYrrxiXiv8hKvvLU3TJNG2QqwSYyFqASKO+nL+PPI9fdkAlXz0uG8E3DMuB0oqGLwi+96IwGSqCQ0n+1f21+3/vto5Cu+cvprBe02NcYEeWFb3OUsHbO+87nXsjJrtqTrgGbi0DFNM28jaixVGGdR+9AN08qOK7CBGZ082DMdsFFqgQcko8xD7XJAJNKgGrYaqpTZuEVYW7A38KcFxdoIjE5H6uo1BbDv0OJpqXUO+BT4DQzB8DTqaRzAOPOhi6YZZaE3rTMsuKR0FLU65adtxD8H7n2Za6jU3fKw3jUtMXGyAWJoJc9mhK1hqv50A5cFK4TU25Zc95bxK4nGYEVw1lBhTp3PVwmgq1W0skudn91lSqMhWx39+vK7vaWSB+dDXuR7zgdc4GW6kOY8fg34uuDUI5UDu/GBxNgPKxCwidKkMfy7leKgSRBPZ5Iv7BbTFNB6fUl7NFPIMJ5foTNp5hHymQWqhv/rg4gZRNJHsWnnCHUbHhKaYxuUlZgie/OCqWKVNFXeW/7PxnFyQIHH+9O0arhdcw0rNYLlf9Mk/MQLC8wPwVE+cyPaoS4+R+j82hR1YyIowtg3Yop/QvWE7bgTgHHFosQ1HUIXZBGArLnU7AOIrOm1kYio5Y4IZ2OKLXFQEZFkPyZNFgrdDtMr+AV2VxK4l0I/HnBkZ93eGQnxJJMUC4PEzDciXac4ZNgqgSqlbymjwYEvIPiuOilxLGGIEJY/6LS4D5Kitxz3IpVgqGJupyruWWVZkOELcogWXQf05LtmERCALG7lbvyKqoYv0j+MnVnz3SMoHKiPaJBuyLe1yw9rBl8cNuP7PhWjfRWWr9zjd6ymn47k3pNj9N1UTfkjaPSOzOD2wcYsLjC9xJaynBucUCnh9KoXwTSuxnsLcehlKBgaGKBVIXo9ypxE66oH6ZnqVIKcuAGz96mAT8ESWaWIBDxLjZN0QtagvL5g+9+jbtn7TsiS7YTbj3czvCGeKYFFA+lXIQ/UBrnz97DuB+/zwf/tH51d2u3inQOAAAA',
+  'Dance and Movements': 'data:image/webp;base64,UklGRpAEAABXRUJQVlA4IIQEAAAQFACdASpHAEgAPqFCmkimI6KhK5jt+MAUCWwAxRIZQK8oGz9wQL1Cs23HmA84f0TbyX6AHSo/41+6mIlgQaCqqPGvZaz7/V/AqbdSQxLXpfZZwvCZVMnxzMyhjhnb9sPxSyCh+trOFZ4SIC+CZTP2GFSYnViVfEzie0+W3pPVn7MQIgHbkFBL7WRAd5edAm7eM0TRminaZfZY8CyNJKEm2c8K44Yzow5gAP79Oq07JZo/qjPZ1L2j/wx9niFMoF8ovpnnJRBrvq2Nn41oSz3ZGCJHVi9soQLwamagFX8hKn4M5JEhSJhv/FHux2yAq38BZaLQ1Ez+PjkU7d+BQaginhP2wQuLY7bKwjQAYzrgX74GcF6sDSTVdLQnJuIQ+iFXrpkDGIXgIk1I7cZBJMzkk+y6ysS94FbCrfQupmwUPzDOK2WKyPzu7zjkKOUhxSir9pPg5LDl53kVTxKff9RQGMR2TXoycli6AuDX7HfWxscmkVPwceN00fI+hhhuow4Pt0OcQzA+Ou6h+L0xhvccbx13vfUKTTQtjj6wtSgsOXDAvQPfP3O/hfWhV3PmOz9NCngEQwfnmS+P+YDNyS7aM/EB+v+sATxo/aJxLu1ymrvf8S123+3FPR2wzUjSKWKLyp2rN2voQLzY5YOo3foIZeXjJkq5CAgCLPGqK8mKLG58PcvAsZQCi87fqrO7XeKGsU0zavkUnXxc0vGoGC5lOWo/zgkmAkRYXN8zIVe0Wj2KkJiJwW2OY9yLq7W0BoYlovcQjrKHrL+xEn4TISguvnWdiadOJHqmpJKMY+JhULRAUmikyKjp/ecGCbvklzLJRJwQPWXa6RUyLe24uh7o2YbeD3HGVA30gUclkg7Z2kJ78krwqmZ8Tjqm/yn6+I8+PLzo+WUvzthtChvFiOeIFbv2XFj22Uet3pm49iA4yY9LceGc1yEqzFB6+/ose5J3goGisCU1W3kf8s+Uvsr4i8E0Y23Yey/aYUnnZ0tSeeb/YZqGjAl/EjuYp806bTVmDMUtQ+06NDnjJ1nMqOIiddtx5Q1bgi6dfLuML5La7fNwSN65HbnEb3cBfA/Pn26QhOAeTSoNamMD3dFymvgoKt9n3k3Vj2AgUiMcRunRtyXL4Hi63VNcfZoefUnOuM4PsSczi1gc+wdykKBlSQf0kZ+FrYH2vbmttP50jsjs9XMNVE+OgOrhAHZ4BXfnrniXpd4Bc/ijtsazqgNHWVgaxR8jInhuKddcpqJnnzndal/2ZcGJCElmsKpSYiISk6JEZlQ+416oVus/bIerqlHYmWYsyN2PafuzYD4Ijmq1LaDkdGovfWbVGJteuUbEhir65E+yJwVk5FslgVUbGo7d3kLXbyhHZR4PfeK3KIkg2Lcx2dfWXUPvxRTUczKHW/n6PaaUPInLA3UcQv5h3BdXPnivboGG8UvQ65lfzUjxDE2fuJQsARxDCmNEOY4rQ+95nMi6aRn430hRN1Y+ZZkVTGYZEB9nr9BuCWmv503s6GQ9/YcVJu0SD45hfSwa2FTQAAAA'
+};
 function updatePreparedFor() {
   const subject = $('subject').value;
   const choices = {
-    'Visual Arts': { icon: '🎨', label: 'Visual Arts' },
-    'Theatre': { icon: '🎭', label: 'Theatre' },
-    'Music & Singing': { icon: '🎸', label: 'Music & Singing' },
-    'Dance and Movements': { icon: '💃', label: 'Dance and Movements' }
+    'Visual Arts': 'Visual Arts',
+    'Theatre': 'Theatre',
+    'Music & Singing': 'Music & Singing',
+    'Dance and Movements': 'Dance and Movements'
   };
   const display = $('preparedForDisplay');
-  const choice = choices[subject];
-  if (!choice) {
+  const label = choices[subject];
+  if (!label) {
     $('developer').value = '';
-    display.innerHTML = '<span class="prepared-for-icon" aria-hidden="true">🎨 🎭 🎸 💃</span><span>Select a Subject to display its illustration and name.</span>';
+    display.innerHTML = '<span>Select a Subject to display its illustration and name.</span>';
     return;
   }
-  $('developer').value = choice.label;
-  display.innerHTML = '<span class="prepared-for-icon" aria-hidden="true">' + choice.icon + '</span><span>' + choice.label + '</span>';
+  $('developer').value = label;
+  display.innerHTML = '<img class="prepared-for-icon" alt="" src="' + PREPARED_FOR_ICONS[subject] + '"><span>' + label + '</span>';
 }
 
 function updateChapterOptions(preserveValue = false) {
