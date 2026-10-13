@@ -186,13 +186,22 @@ async function loadTeacherNames() {
   select.innerHTML = '<option value="">Loading teacher names…</option>';
   try {
     const url = 'https://docs.google.com/spreadsheets/d/' + TEACHER_SHEET_ID +
-      '/gviz/tq?tqx=out:csv&gid=' + TEACHER_SHEET_GID;
+      '/export?format=csv&gid=' + TEACHER_SHEET_GID;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Google Sheet returned HTTP ' + response.status);
-    const rows = parseCsv(await response.text());
-    const headerIndex = rows.findIndex(row => row.some(cell => cell.trim().replace(/^\\uFEFF/, '') === TEACHER_HEADER));
-    if (headerIndex < 0) throw new Error('Column heading "' + TEACHER_HEADER + '" was not found. Check that this sheet tab is accessible and the heading matches exactly.');
-    const columnIndex = rows[headerIndex].findIndex(cell => cell.trim().replace(/^\\uFEFF/, '') === TEACHER_HEADER);
+    const csvText = await response.text();
+    if (/^\\s*<!doctype html|^\\s*<html/i.test(csvText)) {
+      throw new Error('Google Sheets returned an HTML page instead of CSV. Check the sheet sharing permissions.');
+    }
+    const rows = parseCsv(csvText);
+    const normalizeHeader = value => String(value || '').replace(/^\\uFEFF/, '').replace(/\\s+/g, ' ').trim().toLocaleUpperCase();
+    const wantedHeader = normalizeHeader(TEACHER_HEADER);
+    const headerIndex = rows.findIndex(row => row.some(cell => normalizeHeader(cell) === wantedHeader));
+    if (headerIndex < 0) {
+      const preview = rows.slice(0, 5).map(row => row.map(cell => cell.trim()).filter(Boolean).join(' | ')).filter(Boolean).join(' / ');
+      throw new Error('Column heading "' + TEACHER_HEADER + '" was not found in this tab. First rows returned: ' + (preview || 'no readable cells') + '. Confirm the correct tab and header row.');
+    }
+    const columnIndex = rows[headerIndex].findIndex(cell => normalizeHeader(cell) === wantedHeader);
     const names = [...new Set(rows.slice(headerIndex + 1).map(row => (row[columnIndex] || '').trim()).filter(Boolean))];
     if (!names.length) throw new Error('No teacher names were found under "' + TEACHER_HEADER + '".');
     select.innerHTML = '<option value="">Select a teacher…</option>';
