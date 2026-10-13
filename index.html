@@ -174,8 +174,8 @@ function parseCsv(text) {
       else quoted = !quoted;
     } else if (ch === ',' && !quoted) {
       row.push(value); value = '';
-    } else if ((ch === '\\n' || ch === '\\r') && !quoted) {
-      if (ch === '\\r' && text[i + 1] === '\\n') i++;
+    } else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
       row.push(value); rows.push(row); row = []; value = '';
     } else value += ch;
   }
