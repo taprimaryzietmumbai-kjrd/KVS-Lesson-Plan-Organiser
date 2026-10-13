@@ -161,7 +161,8 @@ function showStatus(message, type='info') {
 }
 const TEACHER_SHEET_ID = '1Uuqoz2KFpTcw9d2HI02fLmFPopTaLnKWwZ9aR-uYCeY';
 const TEACHER_SHEET_GID = '1047578336';
-const TEACHER_HEADER = 'PRTM PATNA';
+const TEACHER_TAB_NAME = 'PRTM PATNA';
+const TEACHER_HEADER = 'Name of the Participant';
 
 function parseCsv(text) {
   const rows = [];
@@ -199,7 +200,7 @@ async function loadTeacherNames() {
     const headerIndex = rows.findIndex(row => row.some(cell => normalizeHeader(cell) === wantedHeader));
     if (headerIndex < 0) {
       const preview = rows.slice(0, 5).map(row => row.map(cell => cell.trim()).filter(Boolean).join(' | ')).filter(Boolean).join(' / ');
-      throw new Error('Column heading "' + TEACHER_HEADER + '" was not found in this tab. First rows returned: ' + (preview || 'no readable cells') + '. Confirm the correct tab and header row.');
+      throw new Error('Column heading "' + TEACHER_HEADER + '" was not found in the "' + TEACHER_TAB_NAME + '" tab. First rows returned: ' + (preview || 'no readable cells') + '.');
     }
     const columnIndex = rows[headerIndex].findIndex(cell => normalizeHeader(cell) === wantedHeader);
     const names = [...new Set(rows.slice(headerIndex + 1).map(row => (row[columnIndex] || '').trim()).filter(Boolean))];
