@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KVS Lesson Plan Organiser</title>
+<style>
+:root{--navy:#17365d;--blue:#1f5e9c;--pale:#eef4fa;--line:#d8e0e8;--ink:#1d2939;--muted:#667085}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
+header{background:var(--navy);color:white;padding:22px max(18px,calc((100% - 1180px)/2))}
+header h1{font-size:clamp(22px,3vw,30px);margin:0 0 5px}header p{margin:0;opacity:.9}
+main{max-width:1180px;margin:22px auto;padding:0 16px 40px}.notice{padding:12px 15px;border-radius:8px;margin-bottom:16px;background:#eaf6ee;color:#205b35;border:1px solid #b8dfc4}
+.notice.error{background:#fff0f0;color:#9b1c1c;border-color:#f0b7b7}.notice.info{background:var(--pale);color:var(--navy);border-color:#c9d9eb}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 2px 8px #162b4508}
+h2{font-size:19px;color:var(--navy);margin:0 0 15px}h3{font-size:16px;color:var(--navy);margin:18px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:5px}.field.wide{grid-column:1/-1}
+label{font-size:13px;font-weight:700;color:#344054}input,select,textarea{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:10px;background:#fff;color:var(--ink)}textarea{min-height:82px;resize:vertical}input:focus,textarea:focus,select:focus{outline:2px solid #9dc3eb;border-color:var(--blue)}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}button{border:0;border-radius:7px;padding:10px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:white}button.secondary{background:#e8edf3;color:#24364b}button.danger{background:#a62c2c}button:disabled{opacity:.55;cursor:wait}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:var(--pale);color:var(--navy);font-size:13px}td input,td textarea{min-width:125px;border:0;padding:7px;background:transparent}td textarea{min-height:58px}
+.saved-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 0}.saved-item:first-child{border-top:0}.saved-meta{font-size:13px;color:var(--muted)}.saved-item strong{display:block}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.panel{padding:15px}}
+@media(max-width:480px){.grid{grid-template-columns:1fr}header{padding:18px}}
+@media print{body{background:white}header{background:white;color:black;padding:0 0 15px}.no-print,button,.notice{display:none!important}main{margin:0;padding:0}.panel{box-shadow:none;border:0;padding:8px 0;break-inside:avoid}input,textarea{border:0!important;padding:2px!important}table{min-width:0;font-size:10px}td input,td textarea{min-width:0;font-size:10px}footer{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>KVS Lesson Plan Organiser</h1>
+  <p>Structured lesson planning • Competency-based teaching • Reflection and follow-up</p>
+</header>
+<main>
+  <div id="status" class="notice info" role="status">Connecting to Google Sheets…</div>
+  <form id="planForm">
+    <input type="hidden" id="planId" name="id">
+    <section class="panel">
+      <h2>1. General Information</h2>
+      <div class="grid">
+        <div class="field"><label for="teacherName">Teacher's Name</label><input id="teacherName" name="teacherName" required></div>
+        <div class="field"><label for="designation">Designation</label><input id="designation" name="designation"></div>
+        <div class="field"><label for="className">Class / Section</label><input id="className" name="className" required></div>
+        <div class="field"><label for="subject">Subject</label><input id="subject" name="subject" required></div>
+        <div class="field"><label for="chapter">Chapter / Theme</label><input id="chapter" name="chapter" required></div>
+        <div class="field"><label for="date">Date</label><input id="date" name="date" type="date"></div>
+        <div class="field"><label for="periodsRequired">Periods Required</label><input id="periodsRequired" name="periodsRequired" type="number" min="1"></div>
+        <div class="field"><label for="students">Number of Students</label><input id="students" name="students" type="number" min="0"></div>
+        <div class="field"><label for="developer">Lesson Plan Prepared By</label><input id="developer" name="developer"></div>
+        <div class="field wide"><label for="source">Source / References</label><textarea id="source" name="source"></textarea></div>
+        <div class="field wide"><label for="concepts">Key Concepts (one per line)</label><textarea id="concepts" name="concepts" placeholder="Concept 1&#10;Concept 2&#10;Concept 3"></textarea></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>2. Teaching–Learning Plan Matrix</h2>
+      <p class="saved-meta">Add one row for each concept or learning sequence. Scroll horizontally on smaller screens.</p>
+      <div class="table-wrap">
+        <table id="matrix"><thead><tr>
+          <th>Concept / Learning Sequence</th><th>NCERT Learning Outcomes</th><th>Pedagogical Strategies / Activities</th><th>Integration with Other Subjects</th><th>Assessment / Item Format</th><th>Resources (Digital / Physical)</th><th>21st-Century Skills / Values / Vocational Skills</th><th>Extension / Real-life Applications</th><th class="no-print">Remove</th>
+        </tr></thead><tbody id="matrixBody"></tbody></table>
+      </div>
+      <div class="actions no-print"><button type="button" class="secondary" id="addRow">+ Add concept row</button></div>
+    </section>
+    <section class="panel">
+      <h2>3. Post-Teaching Reflection and Follow-up</h2>
+      <div class="grid">
+        <div class="field wide"><label for="reflection">Post-teaching reflection: What worked well? What needs improvement?</label><textarea id="reflection" name="reflection"></textarea></div>
+        <div class="field"><label for="remedialPeriods">Remedial Teaching Periods</label><input id="remedialPeriods" name="remedialPeriods" type="number" min="0"></div>
+        <div class="field wide"><label for="remedialConcepts">Concepts / Skills Requiring Remediation</label><textarea id="remedialConcepts" name="remedialConcepts"></textarea></div>
+        <div class="field wide"><label for="selfAssessment">Teacher Self-Assessment Questions</label><textarea id="selfAssessment" name="selfAssessment"></textarea></div>
+        <div class="field wide"><label for="modifications">Implementation Notes / Modifications for Next Time</label><textarea id="modifications" name="modifications"></textarea></div>
+        <div class="field"><label for="teacherSignature">Teacher's Name / Signature</label><input id="teacherSignature" name="teacherSignature"></div>
+        <div class="field"><label for="principalSignature">Principal's Name / Signature</label><input id="principalSignature" name="principalSignature"></div>
+      </div>
+      <div class="actions no-print">
+        <button id="saveBtn" type="submit">Save lesson plan to Google Sheets</button>
+        <button type="button" class="secondary" id="newBtn">New / Clear form</button>
+        <button type="button" class="secondary" id="printBtn">Print / Save as PDF</button>
+      </div>
+    </section>
+  </form>
+  <section class="panel no-print">
+    <h2>4. Saved Lesson Plans</h2>
+    <div class="actions"><button type="button" id="refreshBtn" class="secondary">Refresh saved plans</button></div>
+    <div id="savedPlans" class="saved-meta" style="margin-top:12px">Loading saved plans…</div>
+  </section>
+  <footer>Kendriya Vidyalaya Sangathan • Lesson Plan Organiser</footer>
+</main>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbyykH9hucLsCnU4481Nz_y6ccfkLxTqPgVStWskxKpwe1i0_S4mCSISS1afmOEiTjD2/exec';
+const $ = id => document.getElementById(id);
+const statusBox = $('status');
+
+function showStatus(message, type='info') {
+  statusBox.textContent = message;
+  statusBox.className = 'notice ' + type;
+}
+function addMatrixRow(values={}) {
+  const fields = [
+    ['concept','Concept / Learning Sequence'],
+    ['outcomes','NCERT Learning Outcomes'],
+    ['strategies','Pedagogical Strategies / Activities'],
+    ['integration','Integration with Other Subjects'],
+    ['assessment','Assessment / Item Format'],
+    ['resources','Resources (Digital / Physical)'],
+    ['skills','21st-Century Skills / Values / Vocational Skills'],
+    ['extension','Extension / Real-life Applications']
+  ];
+  const tr = document.createElement('tr');
+  fields.forEach(([key,label]) => {
+    const td = document.createElement('td');
+    const input = document.createElement('textarea');
+    input.setAttribute('aria-label',label);
+    input.dataset.key = key;
+    input.value = values[key] || '';
+    td.appendChild(input);
+    tr.appendChild(td);
+  });
+  const removeCell = document.createElement('td');
+  removeCell.className = 'no-print';
+  const remove = document.createElement('button');
+  remove.type = 'button'; remove.className = 'danger'; remove.textContent = '×';
+  remove.setAttribute('aria-label','Remove row');
+  remove.addEventListener('click',()=>tr.remove());
+  removeCell.appendChild(remove); tr.appendChild(removeCell);
+  $('matrixBody').appendChild(tr);
+}
+function collectMatrix() {
+  return Array.from($('matrixBody').rows).map(row => {
+    const item = {};
+    row.querySelectorAll('textarea').forEach(el => item[el.dataset.key] = el.value.trim());
+    return item;
+  });
+}
+function collectPlan() {
+  const plan = {};
+  $('planForm').querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
+    if (el.id) plan[el.id] = el.value.trim();
+  });
+  plan.id = $('planId').value || '';
+  plan.matrix = collectMatrix();
+  return plan;
+}
+function fillPlan(plan) {
+  $('planForm').reset();
+  $('planId').value = plan.id || '';
+  Object.keys(plan).forEach(key => {
+    const el = $(key);
+    if (el && key !== 'planId' && !['matrix'].includes(key)) el.value = plan[key] ?? '';
+  });
+  $('matrixBody').innerHTML = '';
+  (Array.isArray(plan.matrix) && plan.matrix.length ? plan.matrix : [{}]).forEach(addMatrixRow);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function apiGet(params={}) {
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  const response = await fetch(url.toString(), {method:'GET',redirect:'follow'});
+  if (!response.ok) throw new Error('Server returned HTTP ' + response.status);
+  return response.json();
+}
+async function apiPost(payload) {
+  const response = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload),
+    redirect:'follow'
+  });
+  if (!response.ok) throw new Error('Server returned HTTP ' + response.status);
+  return response.json();
+}
+async function refreshPlans() {
+  $('savedPlans').textContent = 'Loading saved plans…';
+  try {
+    const result = await apiGet({action:'list'});
+    if (!result.success) throw new Error(result.message || 'Could not list plans.');
+    if (!result.plans.length) {
+      $('savedPlans').textContent = 'No saved lesson plans yet.';
+      return;
+    }
+    $('savedPlans').innerHTML = '';
+    result.plans.slice().reverse().forEach(plan => {
+      const item = document.createElement('div'); item.className = 'saved-item';
+      const info = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = [plan.chapter || 'Untitled lesson', plan.subject].filter(Boolean).join(' • ');
+      const meta = document.createElement('div'); meta.className = 'saved-meta';
+      meta.textContent = [plan.teacherName, plan.className, plan.date].filter(Boolean).join(' | ');
+      info.append(strong,meta);
+      const buttons = document.createElement('div'); buttons.className = 'actions';
+      const edit = document.createElement('button'); edit.className='secondary'; edit.textContent='Open';
+      edit.addEventListener('click',()=>openPlan(plan.id));
+      const del = document.createElement('button'); del.className='danger'; del.textContent='Delete';
+      del.addEventListener('click',()=>deletePlan(plan.id));
+      buttons.append(edit,del); item.append(info,buttons); $('savedPlans').appendChild(item);
+    });
+  } catch (err) {
+    $('savedPlans').textContent = 'Could not load saved plans: ' + err.message + '. Check deployment access and the Apps Script endpoint.';
+  }
+}
+async function openPlan(id) {
+  try {
+    const result = await apiGet({action:'get',id});
+    if (!result.success) throw new Error(result.message || 'Could not open plan.');
+    fillPlan(result.plan);
+    showStatus('Lesson plan loaded. Make changes and save to update it.','info');
+  } catch(err) { showStatus('Unable to open lesson plan: ' + err.message,'error'); }
+}
+async function deletePlan(id) {
+  if (!confirm('Delete this saved lesson plan? This cannot be undone.')) return;
+  try {
+    const result = await apiPost({action:'delete',id});
+    if (!result.success) throw new Error(result.message || 'Delete failed.');
+    showStatus('Lesson plan deleted.','info'); await refreshPlans();
+  } catch(err) { showStatus('Unable to delete: ' + err.message,'error'); }
+}
+$('planForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = $('saveBtn'); button.disabled = true; button.textContent='Saving…';
+  try {
+    const plan = collectPlan();
+    const result = await apiPost({action:'save', ...plan});
+    if (!result.success) throw new Error(result.message || 'Save failed.');
+    $('planId').value = result.id;
+    showStatus('Lesson plan saved successfully to the LessonPlans sheet.','success');
+    await refreshPlans();
+  } catch(err) {
+    showStatus('Save failed: ' + err.message + '. If this is a browser CORS error, the Apps Script deployment or endpoint response needs adjustment.','error');
+  } finally { button.disabled=false; button.textContent='Save lesson plan to Google Sheets'; }
+});
+$('addRow').addEventListener('click',()=>addMatrixRow());
+$('refreshBtn').addEventListener('click',refreshPlans);
+$('newBtn').addEventListener('click',()=>{
+  $('planForm').reset(); $('planId').value=''; $('matrixBody').innerHTML=''; addMatrixRow(); addMatrixRow(); addMatrixRow();
+  showStatus('Ready for a new lesson plan.','info'); window.scrollTo({top:0,behavior:'smooth'});
+});
+$('printBtn').addEventListener('click',()=>window.print());
+addMatrixRow(); addMatrixRow(); addMatrixRow();
+(async()=>{
+  try {
+    const result = await apiGet({action:'ping'});
+    if (result.success) showStatus('Connected to Google Apps Script. Save a test lesson plan to verify spreadsheet writing.','success');
+    else showStatus('Endpoint responded but reported a problem: '+(result.message||'Unknown error'),'error');
+  } catch(err) { showStatus('Connection test failed: '+err.message,'error'); }
+  await refreshPlans();
+})();
+</script>
+</body>
+</html>
