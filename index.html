@@ -186,34 +186,55 @@ async function loadTeacherNames() {
   const select = $('teacherName');
   select.innerHTML = '<option value="">Loading teacher names…</option>';
   try {
+    // Use the Google Visualization response so values are read as cells,
+    // rather than relying on CSV quoting and row parsing.
     const url = 'https://docs.google.com/spreadsheets/d/' + TEACHER_SHEET_ID +
-      '/export?format=csv&gid=' + TEACHER_SHEET_GID;
+      '/gviz/tq?gid=' + TEACHER_SHEET_GID + '&tqx=out:json';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Google Sheet returned HTTP ' + response.status);
-    const csvText = await response.text();
-    if (/^\\s*<!doctype html|^\\s*<html/i.test(csvText)) {
-      throw new Error('Google Sheets returned an HTML page instead of CSV. Check the sheet sharing permissions.');
+    const responseText = await response.text();
+    const jsonStart = responseText.indexOf('{');
+    const jsonEnd = responseText.lastIndexOf('}');
+    if (jsonStart < 0 || jsonEnd <= jsonStart) {
+      throw new Error('Google Sheets did not return readable sheet data. Check sharing permissions.');
     }
-    const rows = parseCsv(csvText);
+    const data = JSON.parse(responseText.slice(jsonStart, jsonEnd + 1));
+    if (data.status && data.status !== 'ok') {
+      throw new Error('Google Sheets query status: ' + data.status);
+    }
+    const table = data.table;
+    if (!table || !Array.isArray(table.rows)) throw new Error('No rows were returned from the PRTM PATNA tab.');
     const normalizeHeader = value => String(value || '').replace(/^\\uFEFF/, '').replace(/\\s+/g, ' ').trim().toLocaleUpperCase();
-    const wantedHeader = normalizeHeader(TEACHER_HEADER);
-    const headerIndex = rows.findIndex(row => row.some(cell => normalizeHeader(cell) === wantedHeader));
-    if (headerIndex < 0) {
-      const preview = rows.slice(0, 5).map(row => row.map(cell => cell.trim()).filter(Boolean).join(' | ')).filter(Boolean).join(' / ');
-      throw new Error('Column heading "' + TEACHER_HEADER + '" was not found in the "' + TEACHER_TAB_NAME + '" tab. First rows returned: ' + (preview || 'no readable cells') + '.');
+    const cols = table.cols || [];
+    let columnIndex = cols.findIndex(col => normalizeHeader(col.label || col.id) === normalizeHeader(TEACHER_HEADER));
+    let headerRowIndex = -1;
+    if (columnIndex < 0) {
+      // Some Google Sheets responses do not expose the first row as column labels.
+      headerRowIndex = table.rows.findIndex(row => (row.c || []).some(cell => normalizeHeader(cell && (cell.f || cell.v)) === normalizeHeader(TEACHER_HEADER)));
+      if (headerRowIndex >= 0) {
+        columnIndex = (table.rows[headerRowIndex].c || []).findIndex(cell => normalizeHeader(cell && (cell.f || cell.v)) === normalizeHeader(TEACHER_HEADER));
+      }
     }
-    const columnIndex = rows[headerIndex].findIndex(cell => normalizeHeader(cell) === wantedHeader);
-    const names = [...new Set(rows.slice(headerIndex + 1).map(row => (row[columnIndex] || '').trim()).filter(Boolean))];
-    if (!names.length) throw new Error('No teacher names were found under "' + TEACHER_HEADER + '".');
+    // The supplied screenshot confirms "Name of the Participant" is column B.
+    // If the API omits its header metadata, use that known column.
+    if (columnIndex < 0) columnIndex = 1;
+    const startIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+    const names = [...new Set(table.rows.slice(startIndex).map(row => {
+      const cell = row.c && row.c[columnIndex];
+      return cell ? String(cell.f != null ? cell.f : (cell.v != null ? cell.v : '')).trim() : '';
+    }).filter(name => name && normalizeHeader(name) !== normalizeHeader(TEACHER_HEADER) && name.toLocaleLowerCase() !== 'null'))];
+    if (!names.length) throw new Error('The sheet responded, but no names were found in column B. Verify that the PRTM PATNA tab contains participant names and is accessible to viewers.');
     select.innerHTML = '<option value="">Select a teacher…</option>';
     names.sort((a,b) => a.localeCompare(b)).forEach(name => {
       const option = document.createElement('option');
       option.value = name; option.textContent = name; select.appendChild(option);
     });
     select.dataset.loaded = 'true';
+    $('teacherNameHelp').textContent = names.length + ' participant names loaded from the PRTM PATNA tab.';
+    $('teacherNameHelp').style.color = '';
   } catch (error) {
     select.innerHTML = '<option value="">Teacher list could not be loaded</option>';
-    $('teacherNameHelp').textContent = 'Could not load names from the sheet. The source sheet may need Viewer access for anyone with the link. Details: ' + error.message;
+    $('teacherNameHelp').textContent = 'Could not load names from the sheet. Ensure the sheet is viewable by link. Details: ' + error.message;
     $('teacherNameHelp').style.color = '#9b1c1c';
   }
 }
