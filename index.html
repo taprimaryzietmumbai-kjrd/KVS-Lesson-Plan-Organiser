@@ -41,7 +41,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
         <div class="field"><label for="stage">Stage (Foundational / Preparatory)</label><select id="stage" name="stage" required><option value="">Select Stage…</option><option value="Foundational">Foundational</option><option value="Preparatory">Preparatory</option></select></div>
         <div class="field"><label for="className">Class / Section (I–V)</label><select id="className" name="className" required><option value="">Select Class…</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
         <div class="field"><label for="subject">Subject</label><select id="subject" name="subject" required style="min-height:44px;border:2px solid #1f5e9c;background:#fff"><option value="">— Select Subject —</option><option value="Music &amp; Singing">Music &amp; Singing</option><option value="Dance and Movements">Dance and Movements</option><option value="Theatre">Theatre</option><option value="Visual Arts">Visual Arts</option></select></div>
-        <div class="field"><label for="chapter">Chapter / Theme</label><input id="chapter" name="chapter" required></div>
+        <div class="field"><label for="chapter">Chapter / Theme</label><select id="chapter" name="chapter" required disabled><option value="">Select Class and Subject first…</option></select><small id="chapterHelp" class="saved-meta">For Class III, chapters will load automatically based on the selected subject.</small></div>
         <div class="field"><label for="date">Date</label><input id="date" name="date" type="date"></div>
         <div class="field"><label for="periodsRequired">Periods Required</label><input id="periodsRequired" name="periodsRequired" type="number" min="1"></div>
         <div class="field"><label for="students">Number of Students</label><input id="students" name="students" type="number" min="0"></div>
@@ -240,6 +240,58 @@ async function loadTeacherNames() {
   }
 }
 
+const CLASS_THREE_CHAPTERS = {
+  "Visual Arts": [
+    "1. Objects on the Move",
+    "2. Peeping Out of the Window",
+    "3. Picturing Stories",
+    "4. Imaginary Beings",
+    "5. Spreading the Message"
+  ],
+  "Theatre": [
+    "6. Create a Scene",
+    "7. Stitch it for a Story",
+    "8. Time, Team, Technique",
+    "9. View and Review"
+  ],
+  "Music & Singing": [
+    "10. Sing and Play",
+    "11. Music Around Me",
+    "12. Sounds and Instruments",
+    "13. Building Blocks",
+    "14. Ideas and Inspiration"
+  ],
+  "Dance and Movements": [
+    "15. My Everyday Activities in Modes of Dance",
+    "16. Dancing with Rhythm and Tempos",
+    "17. Dances of My Nation",
+    "18. My Dance Expresses Emotions and Narrates Stories",
+    "19. My Dance and Your Dance"
+  ]
+};
+
+function updateChapterOptions(preserveValue = false) {
+  const classValue = $('className').value;
+  const subjectValue = $('subject').value;
+  const chapterSelect = $('chapter');
+  const previousValue = preserveValue ? chapterSelect.value : '';
+  const chapters = classValue === 'III' ? (CLASS_THREE_CHAPTERS[subjectValue] || []) : [];
+  chapterSelect.innerHTML = '';
+  if (chapters.length) {
+    chapterSelect.add(new Option('Select Chapter / Theme…', ''));
+    chapters.forEach(chapter => chapterSelect.add(new Option(chapter, chapter)));
+    chapterSelect.disabled = false;
+    if (preserveValue && chapters.includes(previousValue)) chapterSelect.value = previousValue;
+    $('chapterHelp').textContent = 'Select a chapter for Class III ' + subjectValue + '.';
+  } else {
+    chapterSelect.add(new Option(classValue === 'III' && subjectValue ? 'No chapters configured for this subject' : 'Select Class III and a subject to load chapters…', ''));
+    chapterSelect.disabled = true;
+    $('chapterHelp').textContent = classValue === 'III'
+      ? 'Choose one of the four available subjects to load its chapters.'
+      : 'Automatic chapter selection is currently configured for Class III.';
+  }
+}
+
 function addMatrixRow(values={}) {
   const fields = [
     ['concept','Concept / Learning Sequence'],
@@ -294,11 +346,13 @@ function collectPlan() {
 }
 function fillPlan(plan) {
   $('planForm').reset();
+  updateChapterOptions();
   $('planId').value = plan.id || '';
   Object.keys(plan).forEach(key => {
     const el = $(key);
     if (el && key !== 'planId' && key !== 'matrix' && key !== 'competencies') el.value = plan[key] ?? '';
   });
+  updateChapterOptions(true);
   const competencySelect = $('competencies');
   const selectedCompetencies = Array.isArray(plan.competencies)
     ? plan.competencies
@@ -405,6 +459,9 @@ $('newBtn').addEventListener('click',()=>{
 });
 $('printBtn').addEventListener('click',()=>window.print());
 addMatrixRow(); addMatrixRow(); addMatrixRow();
+$('className').addEventListener('change', () => updateChapterOptions());
+$('subject').addEventListener('change', () => updateChapterOptions());
+updateChapterOptions();
 loadTeacherNames();
 (async()=>{
   try {
