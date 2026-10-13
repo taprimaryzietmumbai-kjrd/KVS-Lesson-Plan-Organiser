@@ -312,12 +312,13 @@ function updateChapterOptions(preserveValue = false) {
     chapters.forEach(chapter => chapterSelect.add(new Option(chapter, chapter)));
     chapterSelect.disabled = false;
     if (preserveValue && chapters.includes(previousValue)) chapterSelect.value = previousValue;
-    $('chapterHelp').textContent = 'Select a chapter for Class III ' + subjectValue + '.';
+    $('chapterHelp').textContent = 'Select a chapter for Class ' + classValue + ' ' + subjectValue + '.';
   } else {
-    chapterSelect.add(new Option(classValue === 'III' && subjectValue ? 'No chapters configured for this subject' : 'Select Class III and a subject to load chapters…', ''));
+    const configuredClass = classValue === 'III' || classValue === 'IV';
+    chapterSelect.add(new Option(configuredClass && subjectValue ? 'No chapters configured for this subject' : 'Select a supported class and subject to load chapters…', ''));
     chapterSelect.disabled = true;
-    $('chapterHelp').textContent = (classValue === 'III' || classValue === 'IV')
-      ? 'Choose one of the four available subjects to load its chapters.'
+    $('chapterHelp').textContent = configuredClass
+      ? (subjectValue ? 'No chapters are configured for Class ' + classValue + ' ' + subjectValue + '.' : 'Choose a subject to load chapters for Class ' + classValue + '.')
       : 'Automatic chapter selection is currently configured for Classes III and IV.';
   }
 }
