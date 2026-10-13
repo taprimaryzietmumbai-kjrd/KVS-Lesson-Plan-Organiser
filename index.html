@@ -240,6 +240,35 @@ async function loadTeacherNames() {
   }
 }
 
+const CLASS_FOUR_CHAPTERS = {
+  "Visual Arts": [
+    "1. Arrangements of Objects",
+    "2. Textures in Nature",
+    "3. Aqua World",
+    "4. People in Action"
+  ],
+  "Theatre": [
+    "5. Explore!",
+    "6. Imagine",
+    "7. Let’s Create",
+    "8. Look Around"
+  ],
+  "Music & Singing": [
+    "9. Sing and Play",
+    "10. Making Music",
+    "11. Songs and Stories",
+    "12. Think, Feel, Create",
+    "13. Sounds and Instruments"
+  ],
+  "Dance and Movements": [
+    "14. My Body in Dance",
+    "15. My Dance Tells Stories",
+    "16. Creating My Dance",
+    "17. Emotion and Expression in Dance",
+    "18. Dances Around Me"
+  ]
+};
+
 const CLASS_THREE_CHAPTERS = {
   "Visual Arts": [
     "1. Objects on the Move",
@@ -275,7 +304,8 @@ function updateChapterOptions(preserveValue = false) {
   const subjectValue = $('subject').value;
   const chapterSelect = $('chapter');
   const previousValue = preserveValue ? chapterSelect.value : '';
-  const chapters = classValue === 'III' ? (CLASS_THREE_CHAPTERS[subjectValue] || []) : [];
+  const chapterSets = classValue === 'III' ? CLASS_THREE_CHAPTERS : (classValue === 'IV' ? CLASS_FOUR_CHAPTERS : null);
+  const chapters = chapterSets ? (chapterSets[subjectValue] || []) : [];
   chapterSelect.innerHTML = '';
   if (chapters.length) {
     chapterSelect.add(new Option('Select Chapter / Theme…', ''));
@@ -286,9 +316,9 @@ function updateChapterOptions(preserveValue = false) {
   } else {
     chapterSelect.add(new Option(classValue === 'III' && subjectValue ? 'No chapters configured for this subject' : 'Select Class III and a subject to load chapters…', ''));
     chapterSelect.disabled = true;
-    $('chapterHelp').textContent = classValue === 'III'
+    $('chapterHelp').textContent = (classValue === 'III' || classValue === 'IV')
       ? 'Choose one of the four available subjects to load its chapters.'
-      : 'Automatic chapter selection is currently configured for Class III.';
+      : 'Automatic chapter selection is currently configured for Classes III and IV.';
   }
 }
 
