@@ -158,7 +158,11 @@ async function apiGet(params={}) {
   return response.json();
 }
 async function apiPost(payload) {
-  const response = await fetch(API_URL, {
+  // The current Apps Script handler reads action from URL parameters
+  // before parsing a POST body, so pass action in the URL as well.
+  const url = new URL(API_URL);
+  url.searchParams.set('action', payload.action);
+  const response = await fetch(url.toString(), {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload),
