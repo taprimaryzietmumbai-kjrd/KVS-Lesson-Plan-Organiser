@@ -61,12 +61,16 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
             <option value="C–4.1 Recognises musical elements in nature and describes their artistic qualities.">C–4.1 — Recognises musical elements in nature and describes their artistic qualities.</option>
             <option value="C–4.2 Demonstrates curiosity towards local art forms and culture.">C–4.2 — Demonstrates curiosity towards local art forms and culture.</option>
           </select>
-          <small id="competenciesHelp" class="saved-meta">On a computer, hold Ctrl (Windows) or Command (Mac) while clicking to select multiple competencies.</small>
+          <small id="competenciesHelp" class="saved-meta">Select one or more supplied competencies, or type additional competencies below, one per line.</small>
+          <label for="customCompetencies">Add your own competencies (optional; one per line)</label>
+          <textarea id="customCompetencies" name="customCompetencies" placeholder="Type any additional competencies here, one per line"></textarea>
         </div>
         <div class="field wide" id="learningOutcomesWrap">
           <label for="learningOutcomes">Competencies / Learning Outcomes — select one or more</label>
           <select id="learningOutcomes" name="learningOutcomes" multiple size="8" aria-describedby="learningOutcomesHelp"></select>
-          <small id="learningOutcomesHelp" class="saved-meta">For Class V and Music &amp; Singing, the supplied outcomes load automatically. Select one or more outcomes.</small>
+          <small id="learningOutcomesHelp" class="saved-meta">Choose a class and subject to load the configured outcomes automatically. You may also type your own outcomes below, one per line.</small>
+          <label for="customLearningOutcomes">Add your own competencies / learning outcomes (optional; one per line)</label>
+          <textarea id="customLearningOutcomes" name="customLearningOutcomes" placeholder="Type any additional learning outcomes here, one per line"></textarea>
         </div>
         <div class="field wide">
           <label for="concepts">Key Concepts — select one or more</label>
@@ -409,18 +413,30 @@ function updateLearningOutcomeOptions(preserveValue = false) {
   if (subjectValue === 'Music & Singing' && classValue === 'IV') outcomes = CLASS_FOUR_MUSIC_OUTCOMES;
   if (subjectValue === 'Music & Singing' && classValue === 'V') outcomes = CLASS_FIVE_MUSIC_OUTCOMES;
   select.innerHTML = '';
-  if (!outcomes.length) {
+  if (!classValue || !subjectValue) {
     select.disabled = true;
-    select.add(new Option('Select Class IV or V and Music & Singing to load outcomes', ''));
+    select.add(new Option('Select a class and subject to load configured outcomes', ''));
     select.options[0].disabled = true;
-    return;
+  } else if (!outcomes.length) {
+    select.disabled = true;
+    select.add(new Option('No supplied outcomes configured for Class ' + classValue + ' — add your own below', ''));
+    select.options[0].disabled = true;
+  } else {
+    select.disabled = false;
+    outcomes.forEach(outcome => {
+      const option = new Option(outcome, outcome);
+      option.selected = oldSelected.includes(outcome);
+      select.add(option);
+    });
   }
-  select.disabled = false;
-  outcomes.forEach(outcome => {
-    const option = new Option(outcome, outcome);
-    option.selected = oldSelected.includes(outcome);
-    select.add(option);
-  });
+  const help = $('learningOutcomesHelp');
+  if (classValue && subjectValue && outcomes.length) {
+    help.textContent = 'For Class ' + classValue + ' and ' + subjectValue + ', the supplied outcomes load automatically. Select one or more outcomes, or type additional outcomes below.';
+  } else if (classValue && subjectValue) {
+    help.textContent = 'Supplied outcomes are not yet configured for Class ' + classValue + ' and ' + subjectValue + '. You can still type your own outcomes below, one per line.';
+  } else {
+    help.textContent = 'Choose a class and subject to load the configured outcomes automatically. You may also type your own outcomes below, one per line.';
+  }
 }
 
 function updateChapterOptions(preserveValue = false) {
@@ -488,9 +504,13 @@ function collectPlan() {
   const plan = {};
   $('planForm').querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
     if (el.id === 'learningOutcomes') {
-      plan.learningOutcomes = Array.from(el.selectedOptions).map(option => option.value);
+      plan.learningOutcomes = Array.from(el.selectedOptions).map(option => option.value).filter(Boolean);
     } else if (el.id === 'competencies') {
-      plan.competencies = Array.from(el.selectedOptions).map(option => option.value);
+      plan.competencies = Array.from(el.selectedOptions).map(option => option.value).filter(Boolean);
+    } else if (el.id === 'customLearningOutcomes') {
+      plan.learningOutcomes = (plan.learningOutcomes || []).concat(el.value.split(/\\r?\\n/).map(value => value.trim()).filter(Boolean));
+    } else if (el.id === 'customCompetencies') {
+      plan.competencies = (plan.competencies || []).concat(el.value.split(/\\r?\\n/).map(value => value.trim()).filter(Boolean));
     } else if (el.id === 'concepts') {
       plan.concepts = Array.from(el.selectedOptions).map(option => option.value);
     } else if (el.id) {
@@ -515,6 +535,7 @@ function fillPlan(plan) {
   const learningOutcomeSelect = $('learningOutcomes');
   const selectedOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : (typeof plan.learningOutcomes === 'string' ? plan.learningOutcomes.split('\\n').filter(Boolean) : []);
   Array.from(learningOutcomeSelect.options).forEach(option => { option.selected = selectedOutcomes.includes(option.value); });
+  $('customLearningOutcomes').value = selectedOutcomes.filter(value => !Array.from(learningOutcomeSelect.options).some(option => option.value === value)).join('\\n');
   const competencySelect = $('competencies');
   const selectedCompetencies = Array.isArray(plan.competencies)
     ? plan.competencies
@@ -522,6 +543,7 @@ function fillPlan(plan) {
   Array.from(competencySelect.options).forEach(option => {
     option.selected = selectedCompetencies.includes(option.value);
   });
+  $('customCompetencies').value = selectedCompetencies.filter(value => !Array.from(competencySelect.options).some(option => option.value === value)).join('\\n');
   const conceptsSelect = $('concepts');
   const selectedConcepts = Array.isArray(plan.concepts)
     ? plan.concepts
