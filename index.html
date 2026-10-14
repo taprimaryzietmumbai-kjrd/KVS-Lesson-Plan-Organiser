@@ -42,7 +42,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
         <div class="field"><label for="designation">Designation</label><input id="designation" name="designation" value="Primary Teacher (Music)" readonly></div>
         <div class="field"><label for="stage">Stage (Foundational / Preparatory)</label><select id="stage" name="stage" required><option value="">Select Stage…</option><option value="Foundational">Foundational</option><option value="Preparatory">Preparatory</option></select></div>
         <div class="field"><label for="className">Class / Section (I–V)</label><select id="className" name="className" required><option value="">Select Class…</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
-        <div class="field"><label for="subject">Subject</label><select id="subject" name="subject" required style="min-height:44px;border:2px solid #1f5e9c;background:#fff"><option value="">— Select Subject —</option><option value="Music &amp; Singing">Music &amp; Singing</option><option value="Dance and Movements">Dance and Movements</option><option value="Theatre">Theatre</option><option value="Visual Arts">Visual Arts</option></select></div>
+        <div class="field"><label for="subject">Subject</label><select id="subject" name="subject" required style="min-height:44px;border:2px solid #1f5e9c;background:#fff"><option value="">— Select Subject —</option><option value="Music &amp; Singing">Music &amp; Singing</option><option value="Dance and Movements">Dance and Movements</option><option value="Theatre">Theatre</option><option value="Visual Arts">Visual Arts</option><option value="TWAU">TWAU (The World Around Us)</option></select></div>
         <div class="field"><label for="chapter">Chapter / Theme</label><select id="chapter" name="chapter" required disabled><option value="">Select Class and Subject first…</option></select><small id="chapterHelp" class="saved-meta">For Class III, chapters will load automatically based on the selected subject.</small></div>
         <div class="field"><label for="date">Date</label><input id="date" name="date" type="date"></div>
         <div class="field"><label for="periodsRequired">Periods Required</label><input id="periodsRequired" name="periodsRequired" type="number" min="1"></div>
@@ -352,7 +352,8 @@ function updatePreparedFor() {
     'Visual Arts': 'Visual Arts',
     'Theatre': 'Theatre',
     'Music & Singing': 'Music & Singing',
-    'Dance and Movements': 'Dance and Movements'
+    'Dance and Movements': 'Dance and Movements',
+    'TWAU': 'TWAU (The World Around Us)'
   };
   const display = $('preparedForDisplay');
   const label = choices[subject];
@@ -362,7 +363,11 @@ function updatePreparedFor() {
     return;
   }
   $('developer').value = label;
-  display.innerHTML = '<img class="prepared-for-icon" alt="" src="' + PREPARED_FOR_ICONS[subject] + '"><span>' + label + '</span>';
+  if (PREPARED_FOR_ICONS[subject]) {
+    display.innerHTML = '<img class="prepared-for-icon" alt="" src="' + PREPARED_FOR_ICONS[subject] + '"><span>' + label + '</span>';
+  } else {
+    display.innerHTML = '<span class="prepared-for-icon" aria-hidden="true">🌍</span><span>' + label + '</span>';
+  }
 }
 
 const CLASS_FOUR_MUSIC_OUTCOMES = [
@@ -446,6 +451,7 @@ function updateChapterOptions(preserveValue = false) {
   const previousValue = preserveValue ? chapterSelect.value : '';
   const chapterSets = classValue === 'III' ? CLASS_THREE_CHAPTERS : (classValue === 'IV' ? CLASS_FOUR_CHAPTERS : (classValue === 'V' ? CLASS_FIVE_CHAPTERS : null));
   const chapters = chapterSets ? (chapterSets[subjectValue] || []) : [];
+  // TWAU is selectable for Classes I–V; chapter/theme names can be entered in Source / References when not preconfigured.
   chapterSelect.innerHTML = '';
   if (chapters.length) {
     chapterSelect.add(new Option('Select Chapter / Theme…', ''));
