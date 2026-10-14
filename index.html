@@ -459,6 +459,10 @@ function updateChapterOptions(preserveValue = false) {
     chapterSelect.disabled = false;
     if (preserveValue && chapters.includes(previousValue)) chapterSelect.value = previousValue;
     $('chapterHelp').textContent = 'Select a chapter for Class ' + classValue + ' ' + subjectValue + '.';
+  } else if (subjectValue === 'TWAU') {
+    chapterSelect.add(new Option('Enter the TWAU theme/unit in Source / References', 'TWAU Theme / Unit'));
+    chapterSelect.disabled = false;
+    $('chapterHelp').textContent = 'TWAU is available as a subject. Enter the specific theme, unit or topic in Source / References; supplied TWAU outcomes and chapter lists are not yet configured.';
   } else {
     const configuredClass = classValue === 'III' || classValue === 'IV';
     chapterSelect.add(new Option(configuredClass && subjectValue ? 'No chapters configured for this subject' : 'Select a supported class and subject to load chapters…', ''));
