@@ -63,6 +63,11 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
           </select>
           <small id="competenciesHelp" class="saved-meta">On a computer, hold Ctrl (Windows) or Command (Mac) while clicking to select multiple competencies.</small>
         </div>
+        <div class="field wide" id="learningOutcomesWrap">
+          <label for="learningOutcomes">Learning Outcomes — select one or more</label>
+          <select id="learningOutcomes" name="learningOutcomes" multiple size="8" aria-describedby="learningOutcomesHelp"></select>
+          <small id="learningOutcomesHelp" class="saved-meta">For Class V and Music &amp; Singing, the supplied outcomes load automatically. Select one or more outcomes.</small>
+        </div>
         <div class="field wide">
           <label for="concepts">Key Concepts — select one or more</label>
           <select id="concepts" name="concepts" multiple size="9" aria-describedby="conceptsHelp">
@@ -356,6 +361,45 @@ function updatePreparedFor() {
   display.innerHTML = '<img class="prepared-for-icon" alt="" src="' + PREPARED_FOR_ICONS[subject] + '"><span>' + label + '</span>';
 }
 
+const CLASS_FIVE_MUSIC_OUTCOMES = [
+  "1.1 Can sing a song fluently in pitch and rhythm.",
+  "1.2 Can sing in a group with live music or karaoke.",
+  "1.1 Performs simple rhythms in a steady tempo.",
+  "4.1 Describes music using terminology like pitch, tempo, and Volume.",
+  "2.2 Understands the themes and moods of different songs.",
+  "2.1 Practises and performs different songs individually and in a group.",
+  "3.1 Can make a model of an instrument.",
+  "4.1 Describes about musical instruments that mimic sounds in nature.",
+  "4.2 Shares about common Indian musical instruments.",
+  "3.1 Can make a model of an instrument.",
+  "4.1 Learns and shares about musical instruments that mimic sounds in nature.",
+  "3.1 Learns the importance of breathing for singing.",
+  "2.2 Knows about some basic forms of Indian classical music.",
+  "3.2 Practices and rehearses as per a set schedule.",
+  "4.2 Learns about music legends of India.",
+  "3.2 Makes informed choices when choosing music from a set of options.",
+  "4.2 Uninhibitedly responds to music through movement."
+];
+function updateLearningOutcomeOptions(preserveValue = false) {
+  const select = $('learningOutcomes');
+  if (!select) return;
+  const oldSelected = preserveValue ? Array.from(select.selectedOptions).map(option => option.value) : [];
+  const shouldLoad = $('className').value === 'V' && $('subject').value === 'Music & Singing';
+  select.innerHTML = '';
+  if (!shouldLoad) {
+    select.disabled = true;
+    select.add(new Option('Select Class V and Music & Singing to load outcomes', ''));
+    select.options[0].disabled = true;
+    return;
+  }
+  select.disabled = false;
+  CLASS_FIVE_MUSIC_OUTCOMES.forEach((outcome, index) => {
+    const option = new Option(outcome, outcome);
+    option.selected = oldSelected.includes(outcome);
+    select.add(option);
+  });
+}
+
 function updateChapterOptions(preserveValue = false) {
   const classValue = $('className').value;
   const subjectValue = $('subject').value;
@@ -420,7 +464,9 @@ function collectMatrix() {
 function collectPlan() {
   const plan = {};
   $('planForm').querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
-    if (el.id === 'competencies') {
+    if (el.id === 'learningOutcomes') {
+      plan.learningOutcomes = Array.from(el.selectedOptions).map(option => option.value);
+    } else if (el.id === 'competencies') {
       plan.competencies = Array.from(el.selectedOptions).map(option => option.value);
     } else if (el.id === 'concepts') {
       plan.concepts = Array.from(el.selectedOptions).map(option => option.value);
@@ -442,6 +488,10 @@ function fillPlan(plan) {
   });
   updateChapterOptions(true);
   updatePreparedFor();
+  updateLearningOutcomeOptions(true);
+  const learningOutcomeSelect = $('learningOutcomes');
+  const selectedOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : (typeof plan.learningOutcomes === 'string' ? plan.learningOutcomes.split('\\n').filter(Boolean) : []);
+  Array.from(learningOutcomeSelect.options).forEach(option => { option.selected = selectedOutcomes.includes(option.value); });
   const competencySelect = $('competencies');
   const selectedCompetencies = Array.isArray(plan.competencies)
     ? plan.competencies
@@ -499,7 +549,7 @@ async function savePlanAsPdf(id) {
       ['teacherName',"Teacher's Name"],['designation','Designation'],['stage','Stage'],['className','Class / Section'],
       ['subject','Subject'],['chapter','Chapter / Theme'],['date','Date'],['periodsRequired','Periods Required'],
       ['studentCount','Number of Students'],['preparedBy','Lesson Plan Prepared By'],['competencies','Competencies'],
-      ['concepts','Key Concepts'],['learningObjectives','Learning Objectives'],['teachingLearningMaterials','Teaching-Learning Materials'],
+      ['learningOutcomes','Learning Outcomes'],['concepts','Key Concepts'],['learningObjectives','Learning Objectives'],['teachingLearningMaterials','Teaching-Learning Materials'],
       ['introduction','Introduction'],['activities','Activities'],['assessment','Assessment'],['homework','Homework'],
       ['reflection','Reflection'],['principalSignature',"Director's Name / Signature"]
     ];
@@ -586,10 +636,11 @@ $('newBtn').addEventListener('click',()=>{
 });
 $('printBtn').addEventListener('click',()=>window.print());
 addMatrixRow(); addMatrixRow(); addMatrixRow();
-$('className').addEventListener('change', () => updateChapterOptions());
-$('subject').addEventListener('change', () => { updateChapterOptions(); updatePreparedFor(); });
+$('className').addEventListener('change', () => { updateChapterOptions(); updateLearningOutcomeOptions(); });
+$('subject').addEventListener('change', () => { updateChapterOptions(); updatePreparedFor(); updateLearningOutcomeOptions(); });
 updateChapterOptions();
 updatePreparedFor();
+updateLearningOutcomeOptions();
 loadTeacherNames();
 (async()=>{
   try {
