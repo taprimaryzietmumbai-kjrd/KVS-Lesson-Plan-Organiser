@@ -508,9 +508,9 @@ function collectPlan() {
     } else if (el.id === 'competencies') {
       plan.competencies = Array.from(el.selectedOptions).map(option => option.value).filter(Boolean);
     } else if (el.id === 'customLearningOutcomes') {
-      plan.learningOutcomes = (plan.learningOutcomes || []).concat(el.value.split(/\\r?\\n/).map(value => value.trim()).filter(Boolean));
+      plan.learningOutcomes = (plan.learningOutcomes || []).concat(el.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean));
     } else if (el.id === 'customCompetencies') {
-      plan.competencies = (plan.competencies || []).concat(el.value.split(/\\r?\\n/).map(value => value.trim()).filter(Boolean));
+      plan.competencies = (plan.competencies || []).concat(el.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean));
     } else if (el.id === 'concepts') {
       plan.concepts = Array.from(el.selectedOptions).map(option => option.value);
     } else if (el.id) {
@@ -533,21 +533,21 @@ function fillPlan(plan) {
   updatePreparedFor();
   updateLearningOutcomeOptions(true);
   const learningOutcomeSelect = $('learningOutcomes');
-  const selectedOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : (typeof plan.learningOutcomes === 'string' ? plan.learningOutcomes.split('\\n').filter(Boolean) : []);
+  const selectedOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : (typeof plan.learningOutcomes === 'string' ? plan.learningOutcomes.split('\n').filter(Boolean) : []);
   Array.from(learningOutcomeSelect.options).forEach(option => { option.selected = selectedOutcomes.includes(option.value); });
-  $('customLearningOutcomes').value = selectedOutcomes.filter(value => !Array.from(learningOutcomeSelect.options).some(option => option.value === value)).join('\\n');
+  $('customLearningOutcomes').value = selectedOutcomes.filter(value => !Array.from(learningOutcomeSelect.options).some(option => option.value === value)).join('\n');
   const competencySelect = $('competencies');
   const selectedCompetencies = Array.isArray(plan.competencies)
     ? plan.competencies
-    : (typeof plan.competencies === 'string' ? plan.competencies.split('\\n').filter(Boolean) : []);
+    : (typeof plan.competencies === 'string' ? plan.competencies.split('\n').filter(Boolean) : []);
   Array.from(competencySelect.options).forEach(option => {
     option.selected = selectedCompetencies.includes(option.value);
   });
-  $('customCompetencies').value = selectedCompetencies.filter(value => !Array.from(competencySelect.options).some(option => option.value === value)).join('\\n');
+  $('customCompetencies').value = selectedCompetencies.filter(value => !Array.from(competencySelect.options).some(option => option.value === value)).join('\n');
   const conceptsSelect = $('concepts');
   const selectedConcepts = Array.isArray(plan.concepts)
     ? plan.concepts
-    : (typeof plan.concepts === 'string' ? plan.concepts.split('\\n').map(value => value.trim()).filter(Boolean) : []);
+    : (typeof plan.concepts === 'string' ? plan.concepts.split('\n').map(value => value.trim()).filter(Boolean) : []);
   Array.from(conceptsSelect.options).forEach(option => {
     option.selected = selectedConcepts.includes(option.value);
   });
