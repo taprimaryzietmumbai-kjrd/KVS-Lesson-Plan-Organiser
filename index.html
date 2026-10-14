@@ -64,7 +64,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
           <small id="competenciesHelp" class="saved-meta">On a computer, hold Ctrl (Windows) or Command (Mac) while clicking to select multiple competencies.</small>
         </div>
         <div class="field wide" id="learningOutcomesWrap">
-          <label for="learningOutcomes">Learning Outcomes — select one or more</label>
+          <label for="learningOutcomes">Competencies / Learning Outcomes — select one or more</label>
           <select id="learningOutcomes" name="learningOutcomes" multiple size="8" aria-describedby="learningOutcomesHelp"></select>
           <small id="learningOutcomesHelp" class="saved-meta">For Class V and Music &amp; Singing, the supplied outcomes load automatically. Select one or more outcomes.</small>
         </div>
@@ -361,6 +361,25 @@ function updatePreparedFor() {
   display.innerHTML = '<img class="prepared-for-icon" alt="" src="' + PREPARED_FOR_ICONS[subject] + '"><span>' + label + '</span>';
 }
 
+const CLASS_FOUR_MUSIC_OUTCOMES = [
+  "C-1.1 Can sing a song fluently in pitch and rhythm",
+  "C-1.2 Can sing in a group with live music or karaoke",
+  "C-1.1 Practises vocal warm-ups, sargam patterns, and breathing exercises",
+  "C-1.1 Participates enthusiastically in class",
+  "C-2.2 Understands musical elements, like raga, taal/tala",
+  "C-1.1 Learns and recites simple Konnakkol patterns",
+  "C-2.2 Can sing the arohana and avarohana (ascending and descending scale) of a raga",
+  "C-1.1 Is able to keep tala/tap a rhythm when listening to a song",
+  "C-3.1 Is eager to learn new songs and forms of music",
+  "C-3.2 Understands the concept of music genres",
+  "C-4.2 Can articulate differences between different types of songs",
+  "C-4.2 Understands the role of music in history and tradition",
+  "C-4.2 Is eager to explore various kinds of folk music",
+  "C-4.1 Is able to convey the essence of a story through music and sound",
+  "C-2.2 Is able to modulate voice while reading a story",
+  "C-2.1 Actively listens to music with focus and concentration",
+  "C-2.2 Is able to describe a piece of music in words"
+];
 const CLASS_FIVE_MUSIC_OUTCOMES = [
   "1.1 Can sing a song fluently in pitch and rhythm.",
   "1.2 Can sing in a group with live music or karaoke.",
@@ -384,16 +403,20 @@ function updateLearningOutcomeOptions(preserveValue = false) {
   const select = $('learningOutcomes');
   if (!select) return;
   const oldSelected = preserveValue ? Array.from(select.selectedOptions).map(option => option.value) : [];
-  const shouldLoad = $('className').value === 'V' && $('subject').value === 'Music & Singing';
+  const classValue = $('className').value;
+  const subjectValue = $('subject').value;
+  let outcomes = [];
+  if (subjectValue === 'Music & Singing' && classValue === 'IV') outcomes = CLASS_FOUR_MUSIC_OUTCOMES;
+  if (subjectValue === 'Music & Singing' && classValue === 'V') outcomes = CLASS_FIVE_MUSIC_OUTCOMES;
   select.innerHTML = '';
-  if (!shouldLoad) {
+  if (!outcomes.length) {
     select.disabled = true;
-    select.add(new Option('Select Class V and Music & Singing to load outcomes', ''));
+    select.add(new Option('Select Class IV or V and Music & Singing to load outcomes', ''));
     select.options[0].disabled = true;
     return;
   }
   select.disabled = false;
-  CLASS_FIVE_MUSIC_OUTCOMES.forEach((outcome, index) => {
+  outcomes.forEach(outcome => {
     const option = new Option(outcome, outcome);
     option.selected = oldSelected.includes(outcome);
     select.add(option);
