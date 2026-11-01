@@ -42,6 +42,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
         <div class="field"><label for="designation">Designation</label><input id="designation" name="designation" value="Primary Teacher (Music)" readonly></div>
         <div class="field"><label for="teacherSchool">Kendriya Vidyalaya</label><input id="teacherSchool" name="teacherSchool" readonly placeholder="Auto-filled from participant list"></div>
         <div class="field"><label for="teacherRegion">KVS Region</label><input id="teacherRegion" name="teacherRegion" readonly placeholder="Auto-filled from participant list"></div>
+        <div class="field"><label for="employeeCode">Employee Code</label><input id="employeeCode" name="employeeCode" readonly placeholder="Auto-filled from participant list"></div>
+        <div class="field"><label for="joiningYear">Year of Joining in KVS</label><input id="joiningYear" name="joiningYear" readonly placeholder="Auto-filled from participant list"></div>
+        <div class="field"><label for="educationalQualification">Educational Qualification</label><input id="educationalQualification" name="educationalQualification" readonly placeholder="Auto-filled from participant list"></div>
         <div class="field"><label for="stage">Stage (Foundational / Preparatory)</label><select id="stage" name="stage" required><option value="">Select Stage…</option><option value="Foundational">Foundational</option><option value="Preparatory">Preparatory</option></select></div>
         <div class="field"><label for="className">Class / Section (I–V)</label><select id="className" name="className" required><option value="">Select Class…</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
         <div class="field"><label for="subject">Subject</label><select id="subject" name="subject" required style="min-height:44px;border:2px solid #1f5e9c;background:#fff"><option value="">— Select Subject —</option><option value="Music &amp; Singing">Music &amp; Singing</option><option value="Dance and Movements">Dance and Movements</option><option value="Theatre">Theatre</option><option value="Visual Arts">Visual Arts</option><option value="TWAU">TWAU (The World Around Us)</option></select></div>
@@ -220,10 +223,18 @@ async function loadTeacherNames() {
 function populateParticipantDetails() {
   const selected = $('teacherName').value;
   const person = participantRecords.find(p => p.name === selected);
-  if (!person) return;
-  if (person.designation) $('designation').value = person.designation;
-  $('teacherSchool').value = person.school || '';
-  $('teacherRegion').value = person.region || '';
+  const fields = {
+    designation:'designation',
+    school:'teacherSchool',
+    region:'teacherRegion',
+    employeeCode:'employeeCode',
+    joiningYear:'joiningYear',
+    educationalQualification:'educationalQualification'
+  };
+  Object.entries(fields).forEach(([key,id]) => {
+    const field = $(id);
+    if (field) field.value = person ? (person[key] || '') : '';
+  });
 }
 
 const CLASS_FOUR_CHAPTERS = {
