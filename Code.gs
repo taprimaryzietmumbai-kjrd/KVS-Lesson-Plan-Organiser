@@ -97,7 +97,7 @@ function getParticipants_() {
   const rows = sh.getDataRange().getDisplayValues();
   if (rows.length < 2) return [];
 
-  const headers = rows[0].map(v => String(v || '').trim().toLowerCase().replace(/\\s+/g,' '));
+  const headers = rows[0].map(v => String(v || '').trim().toLowerCase().replace(/\s+/g,' '));
   function findHeader(names) {
     for (let i = 0; i < names.length; i++) {
       const index = headers.indexOf(names[i].toLowerCase());
@@ -154,7 +154,7 @@ function sendAdminOtp_() {
 }
 
 function verifyAdminOtp_(otp) {
-  if (!/^\\d{6}$/.test(otp)) return {success:false,message:'Please enter the 6-digit OTP.'};
+  if (!/^\d{6}$/.test(otp)) return {success:false,message:'Please enter the 6-digit OTP.'};
   const cache = CacheService.getScriptCache();
   const raw = cache.get('admin_otp_record');
   if (!raw) return {success:false,message:'OTP expired. Please request a new OTP.'};
