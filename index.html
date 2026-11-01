@@ -40,6 +40,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
       <div class="grid">
         <div class="field"><label for="teacherName">Teacher's Name (PRTM ADI)</label><select id="teacherName" name="teacherName" required><option value="">Loading teacher names…</option></select><small id="teacherNameHelp" class="saved-meta">Names are loaded from the PRTM ADI participant list.</small></div>
         <div class="field"><label for="designation">Designation</label><input id="designation" name="designation" value="Primary Teacher (Music)" readonly></div>
+        <div class="field"><label for="teacherSchool">Kendriya Vidyalaya</label><input id="teacherSchool" name="teacherSchool" readonly placeholder="Auto-filled from participant list"></div>
+        <div class="field"><label for="teacherRegion">KVS Region</label><input id="teacherRegion" name="teacherRegion" readonly placeholder="Auto-filled from participant list"></div>
         <div class="field"><label for="stage">Stage (Foundational / Preparatory)</label><select id="stage" name="stage" required><option value="">Select Stage…</option><option value="Foundational">Foundational</option><option value="Preparatory">Preparatory</option></select></div>
         <div class="field"><label for="className">Class / Section (I–V)</label><select id="className" name="className" required><option value="">Select Class…</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
         <div class="field"><label for="subject">Subject</label><select id="subject" name="subject" required style="min-height:44px;border:2px solid #1f5e9c;background:#fff"><option value="">— Select Subject —</option><option value="Music &amp; Singing">Music &amp; Singing</option><option value="Dance and Movements">Dance and Movements</option><option value="Theatre">Theatre</option><option value="Visual Arts">Visual Arts</option><option value="TWAU">TWAU (The World Around Us)</option></select></div>
@@ -155,10 +157,25 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
       </div>
     </section>
   </form>
-  <section class="panel no-print">
-    <h2>4. Saved Lesson Plans</h2>
+  <section class="panel no-print" id="adminAccessPanel">
+    <h2>Administrator Access</h2>
+    <p class="saved-meta">Saved lesson plans are restricted to the authorised administrator. Request an OTP sent to the registered administrator email address.</p>
+    <div class="actions">
+      <button type="button" id="requestAdminOtp" class="secondary">Send administrator OTP</button>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="field"><label for="adminOtp">6-digit OTP</label><input id="adminOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Enter OTP"></div>
+    </div>
+    <div class="actions">
+      <button type="button" id="verifyAdminOtp" class="primary">Verify OTP</button>
+      <button type="button" id="adminLogout" class="secondary" hidden>End administrator session</button>
+    </div>
+    <div id="adminStatus" class="saved-meta" role="status" style="margin-top:10px"></div>
+  </section>
+  <section class="panel no-print" id="adminSavedSection" hidden>
+    <h2>4. Saved Lesson Plans — Administrator Only</h2>
     <div class="actions"><button type="button" id="refreshBtn" class="secondary">Refresh saved plans</button></div>
-    <div id="savedPlans" class="saved-meta" style="margin-top:12px">Loading saved plans…</div>
+    <div id="savedPlans" class="saved-meta" style="margin-top:12px">Administrator verification required.</div>
   </section>
   <footer>Kendriya Vidyalaya Sangathan • Lesson Plan Organiser</footer>
 </main>
@@ -171,83 +188,42 @@ function showStatus(message, type='info') {
   statusBox.textContent = message;
   statusBox.className = 'notice ' + type;
 }
-const TEACHER_SHEET_ID = '1pksDgeV53waKMP1pmj0CWbpP3qyAT8nrN8RhU9Y-mKE';
-const TEACHER_TAB_NAME = 'PRTM ADI';
-const TEACHER_HEADER = 'Name of the Participant';
 
-function parseCsv(text) {
-  const rows = [];
-  let row = [], value = '', quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '"') {
-      if (quoted && text[i + 1] === '"') { value += '"'; i++; }
-      else quoted = !quoted;
-    } else if (ch === ',' && !quoted) {
-      row.push(value); value = '';
-    } else if ((ch === '\n' || ch === '\r') && !quoted) {
-      if (ch === '\r' && text[i + 1] === '\n') i++;
-      row.push(value); rows.push(row); row = []; value = '';
-    } else value += ch;
-  }
-  if (value.length || row.length) { row.push(value); rows.push(row); }
-  return rows;
-}
+let adminToken = '';
+let participantRecords = [];
+
 async function loadTeacherNames() {
   const select = $('teacherName');
-  select.innerHTML = '<option value="">Loading teacher names…</option>';
+  select.innerHTML = '<option value="">Loading participant names…</option>';
   try {
-    // Use the Google Visualization response so values are read as cells,
-    // rather than relying on CSV quoting and row parsing.
-    const url = 'https://docs.google.com/spreadsheets/d/' + TEACHER_SHEET_ID +
-      '/gviz/tq?sheet=' + encodeURIComponent(TEACHER_TAB_NAME) + '&tqx=out:json';
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Google Sheet returned HTTP ' + response.status);
-    const responseText = await response.text();
-    const jsonStart = responseText.indexOf('{');
-    const jsonEnd = responseText.lastIndexOf('}');
-    if (jsonStart < 0 || jsonEnd <= jsonStart) {
-      throw new Error('Google Sheets did not return readable sheet data. Check sharing permissions.');
-    }
-    const data = JSON.parse(responseText.slice(jsonStart, jsonEnd + 1));
-    if (data.status && data.status !== 'ok') {
-      throw new Error('Google Sheets query status: ' + data.status);
-    }
-    const table = data.table;
-    if (!table || !Array.isArray(table.rows)) throw new Error('No rows were returned from the PRTM ADI tab.');
-    const normalizeHeader = value => String(value || '').replace(/^\\uFEFF/, '').replace(/\\s+/g, ' ').trim().toLocaleUpperCase();
-    const cols = table.cols || [];
-    let columnIndex = cols.findIndex(col => normalizeHeader(col.label || col.id) === normalizeHeader(TEACHER_HEADER));
-    let headerRowIndex = -1;
-    if (columnIndex < 0) {
-      // Some Google Sheets responses do not expose the first row as column labels.
-      headerRowIndex = table.rows.findIndex(row => (row.c || []).some(cell => normalizeHeader(cell && (cell.f || cell.v)) === normalizeHeader(TEACHER_HEADER)));
-      if (headerRowIndex >= 0) {
-        columnIndex = (table.rows[headerRowIndex].c || []).findIndex(cell => normalizeHeader(cell && (cell.f || cell.v)) === normalizeHeader(TEACHER_HEADER));
-      }
-    }
-    // The supplied screenshot confirms "Name of the Participant" is column B.
-    // If the API omits its header metadata, use that known column.
-    if (columnIndex < 0) columnIndex = 1;
-    const startIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
-    const names = [...new Set(table.rows.slice(startIndex).map(row => {
-      const cell = row.c && row.c[columnIndex];
-      return cell ? String(cell.f != null ? cell.f : (cell.v != null ? cell.v : '')).trim() : '';
-    }).filter(name => name && normalizeHeader(name) !== normalizeHeader(TEACHER_HEADER) && name.toLocaleLowerCase() !== 'null'))];
-    if (!names.length) throw new Error('The sheet responded, but no names were found in column B. Verify that the PRTM ADI tab contains participant names and is accessible to viewers.');
+    const result = await apiGet({action:'participants'});
+    if (!result.success) throw new Error(result.message || 'Participant list could not be loaded.');
+    participantRecords = Array.isArray(result.participants) ? result.participants : [];
+    if (!participantRecords.length) throw new Error('No participants were returned from the PRTM ADI tab.');
     select.innerHTML = '<option value="">Select a teacher…</option>';
-    names.sort((a,b) => a.localeCompare(b)).forEach(name => {
+    participantRecords.sort((a,b) => String(a.name).localeCompare(String(b.name))).forEach(person => {
       const option = document.createElement('option');
-      option.value = name; option.textContent = name; select.appendChild(option);
+      option.value = person.name;
+      option.textContent = person.name;
+      select.appendChild(option);
     });
     select.dataset.loaded = 'true';
-    $('teacherNameHelp').textContent = names.length + ' participant names loaded from the PRTM ADI tab.';
+    $('teacherNameHelp').textContent = participantRecords.length + ' participants loaded from PRTM ADI. School and designation details populate when a teacher is selected.';
     $('teacherNameHelp').style.color = '';
   } catch (error) {
-    select.innerHTML = '<option value="">Teacher list could not be loaded</option>';
-    $('teacherNameHelp').textContent = 'Could not load names from the sheet. Ensure the sheet is viewable by link. Details: ' + error.message;
+    select.innerHTML = '<option value="">Participant list could not be loaded</option>';
+    $('teacherNameHelp').textContent = 'Could not load PRTM ADI participants: ' + error.message;
     $('teacherNameHelp').style.color = '#9b1c1c';
   }
+}
+
+function populateParticipantDetails() {
+  const selected = $('teacherName').value;
+  const person = participantRecords.find(p => p.name === selected);
+  if (!person) return;
+  if (person.designation) $('designation').value = person.designation;
+  $('teacherSchool').value = person.school || '';
+  $('teacherRegion').value = person.region || '';
 }
 
 const CLASS_FOUR_CHAPTERS = {
@@ -566,16 +542,17 @@ function fillPlan(plan) {
 }
 async function apiGet(params={}) {
   const url = new URL(API_URL);
+  if (adminToken && !params.adminToken) params = {...params, adminToken};
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
   const response = await fetch(url.toString(), {method:'GET',redirect:'follow'});
   if (!response.ok) throw new Error('Server returned HTTP ' + response.status);
   return response.json();
 }
 async function apiPost(payload) {
-  // The current Apps Script handler reads action from URL parameters
-  // before parsing a POST body, so pass action in the URL as well.
+  // The Apps Script handler reads action from URL parameters and body.
   const url = new URL(API_URL);
   url.searchParams.set('action', payload.action);
+  if (adminToken && !payload.adminToken) payload = {...payload, adminToken};
   const response = await fetch(url.toString(), {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -622,6 +599,10 @@ async function savePlanAsPdf(id) {
   }
 }
 async function refreshPlans() {
+  if (!adminToken) {
+    $('savedPlans').textContent = 'Administrator OTP verification required.';
+    return;
+  }
   $('savedPlans').textContent = 'Loading saved plans…';
   try {
     const result = await apiGet({action:'list'});
@@ -702,7 +683,37 @@ loadTeacherNames();
     if (result.success) showStatus('Connected to Google Apps Script. Save a test lesson plan to verify spreadsheet writing.','success');
     else showStatus('Endpoint responded but reported a problem: '+(result.message||'Unknown error'),'error');
   } catch(err) { showStatus('Connection test failed: '+err.message,'error'); }
-  await refreshPlans();
+  $('teacherName').addEventListener('change', populateParticipantDetails);
+  $('requestAdminOtp').addEventListener('click', async () => {
+    const box = $('adminStatus');
+    box.textContent = 'Sending OTP…';
+    try {
+      const result = await apiPost({action:'sendAdminOtp'});
+      box.textContent = result.message || (result.success ? 'OTP sent.' : 'Unable to send OTP.');
+    } catch (err) { box.textContent = 'OTP request failed: ' + err.message; }
+  });
+  $('verifyAdminOtp').addEventListener('click', async () => {
+    const box = $('adminStatus');
+    box.textContent = 'Verifying OTP…';
+    try {
+      const result = await apiPost({action:'verifyAdminOtp', otp:$('adminOtp').value.trim()});
+      if (!result.success) throw new Error(result.message || 'OTP verification failed.');
+      adminToken = result.adminToken;
+      $('adminSavedSection').hidden = false;
+      $('adminLogout').hidden = false;
+      $('adminOtp').value = '';
+      box.textContent = 'Administrator verified. Session expires in 30 minutes.';
+      await refreshPlans();
+    } catch (err) { box.textContent = err.message; }
+  });
+  $('adminLogout').addEventListener('click', () => {
+    adminToken = '';
+    $('adminSavedSection').hidden = true;
+    $('adminLogout').hidden = true;
+    $('savedPlans').textContent = 'Administrator verification required.';
+    $('adminStatus').textContent = 'Administrator session ended.';
+  });
+  if (adminToken) adminToken = '';
 })();
 </script>
 </body>
