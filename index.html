@@ -38,7 +38,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
     <section class="panel">
       <h2>1. General Information</h2>
       <div class="grid">
-        <div class="field"><label for="teacherName">Teacher's Name (PRTM PATNA)</label><select id="teacherName" name="teacherName" required><option value="">Loading teacher names…</option></select><small id="teacherNameHelp" class="saved-meta">Names are loaded from the PRTM PATNA column in the linked Google Sheet.</small></div>
+        <div class="field"><label for="teacherName">Teacher's Name (PRTM ADI)</label><select id="teacherName" name="teacherName" required><option value="">Loading teacher names…</option></select><small id="teacherNameHelp" class="saved-meta">Names are loaded from the PRTM ADI participant list.</small></div>
         <div class="field"><label for="designation">Designation</label><input id="designation" name="designation" value="Primary Teacher (Music)" readonly></div>
         <div class="field"><label for="stage">Stage (Foundational / Preparatory)</label><select id="stage" name="stage" required><option value="">Select Stage…</option><option value="Foundational">Foundational</option><option value="Preparatory">Preparatory</option></select></div>
         <div class="field"><label for="className">Class / Section (I–V)</label><select id="className" name="className" required><option value="">Select Class…</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
@@ -171,9 +171,8 @@ function showStatus(message, type='info') {
   statusBox.textContent = message;
   statusBox.className = 'notice ' + type;
 }
-const TEACHER_SHEET_ID = '1Uuqoz2KFpTcw9d2HI02fLmFPopTaLnKWwZ9aR-uYCeY';
-const TEACHER_SHEET_GID = '1047578336';
-const TEACHER_TAB_NAME = 'PRTM PATNA';
+const TEACHER_SHEET_ID = '1pksDgeV53waKMP1pmj0CWbpP3qyAT8nrN8RhU9Y-mKE';
+const TEACHER_TAB_NAME = 'PRTM ADI';
 const TEACHER_HEADER = 'Name of the Participant';
 
 function parseCsv(text) {
@@ -201,7 +200,7 @@ async function loadTeacherNames() {
     // Use the Google Visualization response so values are read as cells,
     // rather than relying on CSV quoting and row parsing.
     const url = 'https://docs.google.com/spreadsheets/d/' + TEACHER_SHEET_ID +
-      '/gviz/tq?gid=' + TEACHER_SHEET_GID + '&tqx=out:json';
+      '/gviz/tq?sheet=' + encodeURIComponent(TEACHER_TAB_NAME) + '&tqx=out:json';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Google Sheet returned HTTP ' + response.status);
     const responseText = await response.text();
@@ -215,7 +214,7 @@ async function loadTeacherNames() {
       throw new Error('Google Sheets query status: ' + data.status);
     }
     const table = data.table;
-    if (!table || !Array.isArray(table.rows)) throw new Error('No rows were returned from the PRTM PATNA tab.');
+    if (!table || !Array.isArray(table.rows)) throw new Error('No rows were returned from the PRTM ADI tab.');
     const normalizeHeader = value => String(value || '').replace(/^\\uFEFF/, '').replace(/\\s+/g, ' ').trim().toLocaleUpperCase();
     const cols = table.cols || [];
     let columnIndex = cols.findIndex(col => normalizeHeader(col.label || col.id) === normalizeHeader(TEACHER_HEADER));
@@ -235,14 +234,14 @@ async function loadTeacherNames() {
       const cell = row.c && row.c[columnIndex];
       return cell ? String(cell.f != null ? cell.f : (cell.v != null ? cell.v : '')).trim() : '';
     }).filter(name => name && normalizeHeader(name) !== normalizeHeader(TEACHER_HEADER) && name.toLocaleLowerCase() !== 'null'))];
-    if (!names.length) throw new Error('The sheet responded, but no names were found in column B. Verify that the PRTM PATNA tab contains participant names and is accessible to viewers.');
+    if (!names.length) throw new Error('The sheet responded, but no names were found in column B. Verify that the PRTM ADI tab contains participant names and is accessible to viewers.');
     select.innerHTML = '<option value="">Select a teacher…</option>';
     names.sort((a,b) => a.localeCompare(b)).forEach(name => {
       const option = document.createElement('option');
       option.value = name; option.textContent = name; select.appendChild(option);
     });
     select.dataset.loaded = 'true';
-    $('teacherNameHelp').textContent = names.length + ' participant names loaded from the PRTM PATNA tab.';
+    $('teacherNameHelp').textContent = names.length + ' participant names loaded from the PRTM ADI tab.';
     $('teacherNameHelp').style.color = '';
   } catch (error) {
     select.innerHTML = '<option value="">Teacher list could not be loaded</option>';
